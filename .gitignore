@@ -21,3 +21,14 @@
 *.i*86
 *.x86_64
 *.hex
+
+#Visual studio cruft
+*.sdf
+*.opensdf
+*.suo
+*.user
+*.filters
+Debug/
+Release/
+threes/Debug/
+threes/Release/
