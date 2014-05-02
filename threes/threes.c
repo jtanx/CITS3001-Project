@@ -97,7 +97,8 @@ void print_tiles(Board *b) {
 }
 
 bool slide_valid(Tile from, Tile to) {
-	return !to || (from == 1  && to == 2) || (from == 2 && to == 1) || (from > 2 && from == to);
+	return (from && !to) || (from == 1  && to == 2) || 
+		   (from == 2 && to == 1) || (from > 2 && from == to);
 }
 
 int log2(int v) {
@@ -133,10 +134,11 @@ void move(Board *b, char *m) {
 		default: return;
 	}
 
-	for (k = 1, row_score = 0; k < BOARD_SPACE; k++) {
+	for (k = 1, row_score = 0; ; k++) {
 		if (k % BOARD_SIZE == 0) {
 			if (local_shift) {
-				row_score += tile_score(b->current[vec[vi][i-dir]]);
+				//Umm this should not be necessary since we're supposedly shifting into an empty spot
+				//row_score += tile_score(b->current[vec[vi][i-dir]]);
 				if (row_score <= min_score) {
 					min_score = row_score;
 					min_index = vec[vi][i-dir];
@@ -147,6 +149,9 @@ void move(Board *b, char *m) {
 			k++;
 			row_score = 0;
 		}
+
+		if (k > BOARD_SPACE)
+			break;
 
 		if (local_shift) {
 			b->current[vec[vi][i-dir]] = b->current[vec[vi][i]];

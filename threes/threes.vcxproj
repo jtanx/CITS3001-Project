@@ -80,6 +80,10 @@
   <ItemGroup>
     <ClInclude Include="threes.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\testing\exampleinput.txt" />
+    <None Include="..\testing\exampleinput2.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
