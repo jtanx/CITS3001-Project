@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #ifdef _DEBUG
 void stahp(void) {
@@ -96,11 +97,28 @@ void print_tiles(Board *b) {
 }
 
 bool slide_valid(Tile from, Tile to) {
-	return (from == 1  && to == 2) || (from == 2 && to == 1) || (from > 2 && from == to);
+	return !to || (from == 1  && to == 2) || (from == 2 && to == 1) || (from > 2 && from == to);
+}
+
+int log2(int v) {
+	int r = 0;
+	while (v >>= 1) r++;
+	return r;
+}
+
+int tile_score(Tile t) {
+	if (t == 1 || t == 2)
+		return 1;
+	else if (t > 2) {
+		return (int)powf(3, log2(t/3) +1);
+	}
+
+	return 0;
 }
 
 void move(Board *b, char *m) {
-	int k, i, vi, dir;
+	int k, i, vi, dir, row_score;
+	int min_score = INT_MAX, min_index = -1;
 	bool shifted = false, local_shift = false;
 	unsigned char vec[2][BOARD_SPACE] = {
 		{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
@@ -115,27 +133,41 @@ void move(Board *b, char *m) {
 		default: return;
 	}
 
-	for (k = 1; k < BOARD_SPACE; k++) {
+	for (k = 1, row_score = 0; k < BOARD_SPACE; k++) {
 		if (k % BOARD_SIZE == 0) {
+			if (local_shift) {
+				row_score += tile_score(b->current[vec[vi][i-dir]]);
+				if (row_score <= min_score) {
+					min_score = row_score;
+					min_index = vec[vi][i-dir];
+				}
+			}
 			local_shift = false;
 			i += dir;
 			k++;
+			row_score = 0;
 		}
 
 		if (local_shift) {
 			b->current[vec[vi][i-dir]] = b->current[vec[vi][i]];
 			b->current[vec[vi][i]] = 0;
-		} else if (slide_valid(b->current[vec[vi][i-dir]], b->current[vec[vi][i]])) {
+		} else if (slide_valid(b->current[vec[vi][i]], b->current[vec[vi][i-dir]])) {
 			local_shift = true;
 			shifted = true;
 			b->current[vec[vi][i-dir]] += b->current[vec[vi][i]];
 			b->current[vec[vi][i]] = 0;
 		}
 
+		row_score += tile_score(b->current[vec[vi][i-dir]]);
+
 		i += dir;
 	}
 	if (!shifted)
 		printf("!!!NO SHIFT!!!\n");
+	else {
+		b->current[min_index] = b->sequence[b->c_sequence];
+		b->c_sequence = (b->c_sequence + 1) % b->n_sequence;
+	}
 	print_board(b);
 }
 
