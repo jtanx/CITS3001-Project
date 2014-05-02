@@ -95,12 +95,47 @@ void print_tiles(Board *b) {
 	printf("\n");
 }
 
+bool slide_valid(Tile from, Tile to) {
+	return (from == 1  && to == 2) || (from == 2 && to == 1) || (from > 2 && from == to);
+}
+
 void move(Board *b, char *m) {
+	int k, i, vi, dir;
+	bool shifted = false, local_shift = false;
+	unsigned char vec[2][BOARD_SPACE] = {
+		{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
+		{0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15}
+	};
+
 	switch (tolower(*m)) {
-		case 'l': case 'r': case 'u': case 'd':
-			break;
+		case 'l': i = 1, vi = 0, dir = 1; break;
+		case 'r': i = BOARD_SPACE - 2, vi = 0, dir = -1; break;
+		case 'u': i = 1, vi = 1, dir = 1; break;
+		case 'd': i = BOARD_SPACE - 2, vi = 1, dir = -1; break;
+		default: return;
 	}
 
+	for (k = 1; k < BOARD_SPACE; k++) {
+		if (k % BOARD_SIZE == 0) {
+			local_shift = false;
+			i += dir;
+			k++;
+		}
+
+		if (local_shift) {
+			b->current[vec[vi][i-dir]] = b->current[vec[vi][i]];
+			b->current[vec[vi][i]] = 0;
+		} else if (slide_valid(b->current[vec[vi][i-dir]], b->current[vec[vi][i]])) {
+			local_shift = true;
+			shifted = true;
+			b->current[vec[vi][i-dir]] += b->current[vec[vi][i]];
+			b->current[vec[vi][i]] = 0;
+		}
+
+		i += dir;
+	}
+	if (!shifted)
+		printf("!!!NO SHIFT!!!\n");
 	print_board(b);
 }
 

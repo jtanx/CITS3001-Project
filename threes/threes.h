@@ -17,6 +17,7 @@ typedef struct ArrayBuilder ArrayBuilder;
 
 #define BOARD_SIZE 4
 #define BOARD_SPACE (BOARD_SIZE * BOARD_SIZE)
+#define TILE(b,x,y) ((b)->current[(x)*BOARD_SIZE + (y)])
 
 typedef int Tile;
 
