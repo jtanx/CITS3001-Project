@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#define IS_POWER_2(v) ((v) && !((v) & ((v) - 1) ))
 
 //64 byte Lookup table for traversing the grid on shifts
 const uint8_t g_trn[4][BOARD_SPACE] = 
@@ -23,9 +24,9 @@ void stahp(void) {
 #endif
 
 bool is_valid_tile(Tile t) {
-	//Is 1, 2 or a multiple of 3 that is also a power of 2.
+	//Is 0, 1, 2 or a multiple of 3 that is also a power of 2.
 	Tile v = t/3;
-	return t == 1 || t == 2 || (!(t % 3) && !(v & (v - 1)));
+	return t <= 2 || (!(t % 3) && IS_POWER_2(v));
 }
 
 bool load_file(Board *b, char *f) {
@@ -133,7 +134,8 @@ bool shift_valid(Tile from, Tile to) {
 void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 	uint8_t i, j;
 
-	for (i = 0; i < BOARD_SIZE; i++) {
+	//If seq_rows is a power of 2, then only one row was shifted -> sub into that row immediately.
+	for (i = 0; i < BOARD_SIZE && !IS_POWER_2(seq_rows); i++) {
 		Tile min_value = UINT_MAX;
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
@@ -147,17 +149,13 @@ void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 				}
 			}
 		}
-
-		//Check if only 1 bit set === check if power of 2
-		if (seq_rows && !(seq_rows & (seq_rows - 1))) {
-			break;
-		}
 	}
 
 	//Seems to work... May have to check for the 'most clockwise' rule
 	j = 0;
 	while (seq_rows >>= 1) j++;
 
+	//It seems that the game ends when the sequence is exhausted!
 	b->current[seq_trn[j]] = b->sequence[b->c_sequence];
 	b->c_sequence = (b->c_sequence + 1) % b->n_sequence;
 }
