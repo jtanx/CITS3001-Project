@@ -1,4 +1,5 @@
 #ifndef _THREES_H
+#define _THREES_H
 
 #ifdef _WIN32 //MSVC compatibility
 	#define PATH_SEPARATOR	'\\'
@@ -13,13 +14,15 @@
 	#include <stdbool.h>
 #endif
 
+#include <stdint.h>
+
 typedef struct ArrayBuilder ArrayBuilder;
 
 #define BOARD_SIZE 4
 #define BOARD_SPACE (BOARD_SIZE * BOARD_SIZE)
 #define TILE(b,x,y) ((b)->current[(x)*BOARD_SIZE + (y)])
 
-typedef unsigned int Tile;
+typedef uint32_t Tile;
 
 typedef struct Direction {
 	char x,y;

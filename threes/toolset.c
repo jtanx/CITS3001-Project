@@ -3,8 +3,8 @@
 /************************ArrayBuilder************************/
 #define RESIZE_FACTOR	2
 struct ArrayBuilder {
-	char *buffer; //C99 byte<->char
-	unsigned nUsed, nTotal;
+	uint8_t *buffer;
+	uint32_t nUsed, nTotal;
 	size_t unitSize;
 };
 

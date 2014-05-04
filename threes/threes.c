@@ -6,8 +6,9 @@
 #include <ctype.h>
 #include <math.h>
 
+
 //64 byte Lookup table for traversing the grid on shifts
-const unsigned char g_trn[4][BOARD_SPACE] = 
+const uint8_t g_trn[4][BOARD_SPACE] = 
 {
 	{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, //Left
 	{0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15}, //Up
@@ -90,7 +91,7 @@ bool load_file(Board *b, char *f) {
 }
 
 void print_board(Board *b) {
-	int i;
+	uint8_t i;
 	for (i = 0; i < BOARD_SPACE; i++) {
 		printf("%3d ", b->current[i]);
 		if ((i+1) % BOARD_SIZE == 0)
@@ -129,29 +130,26 @@ bool shift_valid(Tile from, Tile to) {
  * insertion point.
  * O(n^2) performance, where n is the width of the board 
  */
-void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_trn) {
-	unsigned char i, j, considering;
+void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
+	uint8_t i, j;
 
 	for (i = 0; i < BOARD_SIZE; i++) {
 		Tile min_value = UINT_MAX;
-		considering = 0;
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
-				unsigned char idx = seq_trn[i * BOARD_SIZE + j];
+				uint8_t idx = seq_trn[i * BOARD_SIZE + j];
 				//Three-way comparison
-				if (b->current[idx] == min_value) {
-					considering++;
-				} else if (b->current[idx] < min_value) {
+				if (b->current[idx] < min_value) {
 					min_value = b->current[idx];
-					considering = 1;
 					seq_rows &= ~((1 << j) - 1); //All rows previous are out of the running
-				} else {
-					seq_rows &= ~(1 << j); //This row is no longer in the running
+				} else if (b->current[idx] > min_value) {
+					seq_rows ^= 1 << j; //This row is no longer in the running
 				}
 			}
 		}
 
-		if (considering <= 1) {
+		//Check if only 1 bit set === check if power of 2
+		if (seq_rows && !(seq_rows & (seq_rows - 1))) {
 			break;
 		}
 	}
@@ -168,9 +166,9 @@ void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_
  * Takes 2 * n^2 time in the worst case, where n is the width of the board.
  */
 void move(Board *b, char m) {
-	bool shifted = false, local_shift = false;
-	const unsigned char *trn, *seq_trn;
-	unsigned char i, j, seq_rows = 0;
+	bool local_shift = false;
+	const uint8_t *trn, *seq_trn;
+	uint8_t i, j, seq_rows = 0;
 	//seq_rows is a bitmask for rows that should be considered for sequence insert
 
 	switch (tolower(m)) {
@@ -183,16 +181,15 @@ void move(Board *b, char m) {
 
 	for (i = 0; i < BOARD_SIZE; i++) {
 		for (j = 1; j < BOARD_SIZE; j++) {
-			unsigned char idx = trn[i * BOARD_SIZE + j];
-			unsigned char pidx = trn[i * BOARD_SIZE + j-1];
+			uint8_t idx = trn[i * BOARD_SIZE + j];
+			uint8_t pidx = trn[i * BOARD_SIZE + j-1];
 
 			if (local_shift) {
 				b->current[pidx] = b->current[idx];
 				b->current[idx] = 0;
 			} else if(shift_valid(b->current[idx], b->current[pidx])) {
-				seq_rows |= (1 << (BOARD_SIZE - i - 1));
+				seq_rows |= (1 << (BOARD_SIZE - i - 1)); //Include row which shift occurred in
 				local_shift = true;
-				shifted = true;
 				b->current[pidx] += b->current[idx];
 				b->current[idx] = 0;
 			}
@@ -200,7 +197,7 @@ void move(Board *b, char m) {
 		local_shift = false;
 	}
 
-	if (!shifted)
+	if (!seq_rows) //If seq_rows == 0, no rows have been shifted
 		printf("!!!NO SHIFT!!!\n");
 	else
 		insert_sequence(b, seq_rows, seq_trn);
@@ -208,14 +205,14 @@ void move(Board *b, char m) {
 	print_board(b);
 }
 
-unsigned int tile_score(Tile t) {
+uint32_t tile_score(Tile t) {
 	if (t == 1 || t == 2) {
 		return 1;
 	} else if (t > 2) {
-		unsigned int log2 = 0;
+		uint32_t log2 = 0;
 		t /= 3;
 		while (t >>= 1) log2++;
-		return (unsigned int)powf(3, log2 + 1);
+		return (uint32_t)powf(3, log2 + 1);
 	}
 
 	return 0;
@@ -266,6 +263,7 @@ int main(int argc, char *argv[]) {
 				move(&b, buf[i++]);
 				printf("\n");
 			}
+			print_score(&b);
 			printf("Move: ");
 		}
 	}
