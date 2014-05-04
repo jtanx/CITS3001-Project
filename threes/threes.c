@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <math.h>
 
-//Lookup table for traversing the grid on shifts
+//64 byte Lookup table for traversing the grid on shifts
 const unsigned char g_trn[4][BOARD_SPACE] = 
 {
 	{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, //Left
@@ -110,17 +110,52 @@ bool shift_valid(Tile from, Tile to) {
 		   (from == 2 && to == 1) || (from > 2 && from == to);
 }
 
+void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_trn) {
+	unsigned char i, j, considering;
+
+	for (i = 0; i < BOARD_SIZE; i++) {
+		int min_value = INT_MAX;
+		considering = 0;
+		for (j = 0; j < BOARD_SIZE; j++) {
+			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
+				unsigned char idx = seq_trn[i * BOARD_SIZE + j];
+
+				if (b->current[idx] == min_value) {
+					considering++;
+				} else if (b->current[idx] < min_value) {
+					min_value = b->current[idx];
+					considering = 1;
+					seq_rows &= ~((1 << j) - 1); //All rows previous are out of the running
+				} else {
+					seq_rows &= ~(1 << j); //No longer in the running
+				}
+			}
+		}
+
+		if (considering <= 1) {
+			break;
+		}
+	}
+
+	//Seems to work... May have to check for the 'most clockwise' rule
+	j = 0;
+	while (seq_rows >>= 1) j++;
+
+	b->current[seq_trn[j]] = b->sequence[b->c_sequence];
+	b->c_sequence = (b->c_sequence + 1) % b->n_sequence;
+}
+
 void move(Board *b, char m) {
 	bool shifted = false, local_shift = false;
-	bool shifted_rows[BOARD_SIZE] = {0};
-	const unsigned char *trn;
-	unsigned char i, j;
+	const unsigned char *trn, *seq_trn;
+	unsigned char i, j, seq_rows = 0;
+	//seq_rows is a bitmask for rows that should be considered for sequence insert
 
 	switch (tolower(m)) {
-		case 'l': trn = g_trn[0]; break;
-		case 'u': trn = g_trn[1]; break;
-		case 'r': trn = g_trn[2]; break;
-		case 'd': trn = g_trn[3]; break;
+		case 'l': trn = g_trn[0], seq_trn = g_trn[3]; break;
+		case 'u': trn = g_trn[1], seq_trn = g_trn[2]; break;
+		case 'r': trn = g_trn[2], seq_trn = g_trn[1]; break;
+		case 'd': trn = g_trn[3], seq_trn = g_trn[0]; break;
 		default: return;
 	}
 
@@ -133,7 +168,7 @@ void move(Board *b, char m) {
 				b->current[pidx] = b->current[idx];
 				b->current[idx] = 0;
 			} else if(shift_valid(b->current[idx], b->current[pidx])) {
-				shifted_rows[idx/BOARD_SIZE] = true;
+				seq_rows |= (1 << (BOARD_SIZE - i - 1));
 				local_shift = true;
 				shifted = true;
 				b->current[pidx] += b->current[idx];
@@ -143,28 +178,10 @@ void move(Board *b, char m) {
 		local_shift = false;
 	}
 
-	/*for (k = 1; k < BOARD_SPACE; k++) {
-		if (k % BOARD_SIZE == 0) {
-			i += dir;
-			k++;
-			local_shift = false;
-		}
-
-		if (local_shift) {
-			b->current[vec[vi][i-dir]] = b->current[vec[vi][i]];
-			b->current[vec[vi][i]] = 0;
-		} else if (shift_valid(b->current[vec[vi][i]], b->current[vec[vi][i-dir]])) {
-			shifted_rows[k/BOARD_SIZE] = true;
-			local_shift = true;
-			shifted = true;
-			b->current[vec[vi][i-dir]] += b->current[vec[vi][i]];
-			b->current[vec[vi][i]] = 0;
-		}
-
-		i += dir;
-	}*/
 	if (!shifted)
 		printf("!!!NO SHIFT!!!\n");
+	else
+		insert_sequence(b, seq_rows, seq_trn);
 
 	print_board(b);
 }
