@@ -20,26 +20,20 @@ typedef struct ArrayBuilder ArrayBuilder;
 
 #define BOARD_SIZE 4
 #define BOARD_SPACE (BOARD_SIZE * BOARD_SIZE)
-#define TILE(b,x,y) ((b)->current[(x)*BOARD_SIZE + (y)])
 
 typedef uint32_t Tile;
-
-typedef struct Direction {
-	char x,y;
-} Direction;
 
 typedef struct Board {
 	Tile *sequence;
 	size_t c_sequence;
 	size_t n_sequence;
 	Tile current[BOARD_SPACE];
+	bool finished;
 } Board;
 
 extern bool ab_init(ArrayBuilder **ab, size_t initialCount, size_t unitSize);
 extern bool ab_add(ArrayBuilder *ab, void *data);
 extern int ab_length(ArrayBuilder *ab);
 extern void *ab_finalise(ArrayBuilder **ab, size_t *count);
-
-extern Tile *tile_next_shift(Board *b, Tile *t, Direction *d);
 
 #endif

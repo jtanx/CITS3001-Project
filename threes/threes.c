@@ -134,7 +134,7 @@ bool shift_valid(Tile from, Tile to) {
 void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 	uint8_t i, j;
 
-	//If seq_rows is a power of 2, then only one row was shifted -> sub into that row immediately.
+	//If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
 	for (i = 0; i < BOARD_SIZE && !IS_POWER_2(seq_rows); i++) {
 		Tile min_value = UINT_MAX;
 		for (j = 0; j < BOARD_SIZE; j++) {
@@ -156,8 +156,7 @@ void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 	while (seq_rows >>= 1) j++;
 
 	//It seems that the game ends when the sequence is exhausted!
-	b->current[seq_trn[j]] = b->sequence[b->c_sequence];
-	b->c_sequence = (b->c_sequence + 1) % b->n_sequence;
+	b->current[seq_trn[j]] = b->sequence[b->c_sequence++];
 }
 
 /**
@@ -168,6 +167,11 @@ void move(Board *b, char m) {
 	const uint8_t *trn, *seq_trn;
 	uint8_t i, j, seq_rows = 0;
 	//seq_rows is a bitmask for rows that should be considered for sequence insert
+
+	if (b->finished) {
+		printf("Cannot move a finished board!");
+		return;
+	}
 
 	switch (tolower(m)) {
 		case 'l': trn = g_trn[0], seq_trn = g_trn[3]; break;
@@ -195,11 +199,15 @@ void move(Board *b, char m) {
 		local_shift = false;
 	}
 
-	if (!seq_rows) //If seq_rows == 0, no rows have been shifted
-		printf("!!!NO SHIFT!!!\n");
-	else
+	if (!seq_rows) { //If seq_rows == 0, no rows have been shifted
+		printf("No change!\n");
+		b->finished = true;
+	} else {
 		insert_sequence(b, seq_rows, seq_trn);
-
+		if (b->c_sequence == b->n_sequence) {
+			b->finished = true;
+		}
+	}
 	print_board(b);
 }
 
@@ -257,12 +265,17 @@ int main(int argc, char *argv[]) {
 			printf("Move: ");
 		} else {
 			int i = 0;
-			while (buf[i]) {
+			while (buf[i] && !b.finished) {
 				move(&b, buf[i++]);
 				printf("\n");
 			}
-			print_score(&b);
-			printf("Move: ");
+			if (b.finished) {
+				printf("Finished!\n");
+				print_score(&b);
+				break;
+			} else {
+				printf("Move: ");
+			}
 		}
 	}
 	return 0;
