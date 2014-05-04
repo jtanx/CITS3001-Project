@@ -221,6 +221,14 @@ unsigned int tile_score(Tile t) {
 	return 0;
 }
 
+void print_score(Board *b) {
+	int i, score = 0;
+	for (i = 0; i < BOARD_SPACE; i++) {
+		score += tile_score(b->current[i]);
+	}
+	printf("%d\n", score);
+}
+
 int main(int argc, char *argv[]) {
 	Board b = {0};
 	char buf[BUFSIZ];
@@ -249,6 +257,9 @@ int main(int argc, char *argv[]) {
 				_exit(0);
 #endif
 			break;
+		} else if (tolower(*buf) == 's') {
+			print_score(&b);
+			printf("Move: ");
 		} else {
 			int i = 0;
 			while (buf[i]) {
