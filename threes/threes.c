@@ -23,7 +23,7 @@ void stahp(void) {
 
 bool is_valid_tile(Tile t) {
 	//Is 1, 2 or a multiple of 3 that is also a power of 2.
-	int v = t/3;
+	Tile v = t/3;
 	return t == 1 || t == 2 || (!(t % 3) && !(v & (v - 1)));
 }
 
@@ -50,7 +50,7 @@ bool load_file(Board *b, char *f) {
 	for (i = 0; i < BOARD_SIZE && fgets(buf, BUFSIZ, fp); i++) {
 		tok = strtok_r(buf, " ", &next);
 		for (j = 0; tok != NULL && j < BOARD_SIZE; j++) {
-			int v = strtol(tok, NULL, 10);
+			Tile v = strtoul(tok, NULL, 10);
 			if (!is_valid_tile(v)) {
 				printf("Invalid tile value: %d\n", v);
 				fclose(fp);
@@ -67,7 +67,7 @@ bool load_file(Board *b, char *f) {
 		tok = strtok_r(buf, " ", &next);
 		while (tok != NULL) {
 			if (isdigit(*tok)) {
-				int v = strtol(tok, NULL, 10);
+				Tile v = strtoul(tok, NULL, 10);
 				if (!is_valid_tile(v)) {
 					printf("Invalid tile value: %d\n", v);
 					fclose(fp);
@@ -110,16 +110,35 @@ bool shift_valid(Tile from, Tile to) {
 		   (from == 2 && to == 1) || (from > 2 && from == to);
 }
 
+/**
+ * To be able to insert the new tile from the sequence onto the board, the following is done:
+ * Move done --> Move used when inserting tile:
+ * UP --> RIGHT
+ * RIGHT --> UP
+ * LEFT --> DOWN
+ * DOWN --> LEFT
+ * E.g when an UP shift is performed, we then scan the board as if performing a RIGHT shift.
+ * When scanning the board, seq_rows is used to keep track of which 'row's (or columns) are
+ * still in contention for sequence insertion. Initially, this value is the bitmask of which rows
+ * were shifted in the move, but transposed to work for the new search pattern.
+ *
+ * As the search/scan is performed, seq_rows is updated as necessary to discount rows, based on
+ * what the currently observed 'minimum' value is. 
+ * 
+ * When all rows have been scanned, the log base 2 of seq_rows is performed to determine the 
+ * insertion point.
+ * O(n^2) performance, where n is the width of the board 
+ */
 void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_trn) {
 	unsigned char i, j, considering;
 
 	for (i = 0; i < BOARD_SIZE; i++) {
-		int min_value = INT_MAX;
+		Tile min_value = UINT_MAX;
 		considering = 0;
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
 				unsigned char idx = seq_trn[i * BOARD_SIZE + j];
-
+				//Three-way comparison
 				if (b->current[idx] == min_value) {
 					considering++;
 				} else if (b->current[idx] < min_value) {
@@ -127,7 +146,7 @@ void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_
 					considering = 1;
 					seq_rows &= ~((1 << j) - 1); //All rows previous are out of the running
 				} else {
-					seq_rows &= ~(1 << j); //No longer in the running
+					seq_rows &= ~(1 << j); //This row is no longer in the running
 				}
 			}
 		}
@@ -145,6 +164,9 @@ void insert_sequence(Board *b, unsigned char seq_rows, const unsigned char *seq_
 	b->c_sequence = (b->c_sequence + 1) % b->n_sequence;
 }
 
+/**
+ * Takes 2 * n^2 time in the worst case, where n is the width of the board.
+ */
 void move(Board *b, char m) {
 	bool shifted = false, local_shift = false;
 	const unsigned char *trn, *seq_trn;
@@ -186,14 +208,14 @@ void move(Board *b, char m) {
 	print_board(b);
 }
 
-int tile_score(Tile t) {
+unsigned int tile_score(Tile t) {
 	if (t == 1 || t == 2) {
 		return 1;
 	} else if (t > 2) {
-		int log2 = 0;
+		unsigned int log2 = 0;
 		t /= 3;
 		while (t >>= 1) log2++;
-		return (int)powf(3, log2 + 1);
+		return (unsigned int)powf(3, log2 + 1);
 	}
 
 	return 0;
