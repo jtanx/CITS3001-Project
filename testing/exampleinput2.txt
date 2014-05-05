@@ -1,4 +1,4 @@
-This is a very small example input file. jaja 
+This is a very small example input file. jaja 2nd project page example
 
 1 1 2 2
 1 2 0 0

@@ -24,12 +24,15 @@ typedef struct ArrayBuilder ArrayBuilder;
 typedef uint32_t Tile;
 
 typedef struct Board {
-	Tile *sequence;
+	Tile it[BOARD_SPACE];
 	size_t c_sequence;
-	size_t n_sequence;
-	Tile current[BOARD_SPACE];
 	bool finished;
 } Board;
+
+typedef struct Sequence {
+	Tile *it;
+	size_t count;
+} Sequence;
 
 extern bool ab_init(ArrayBuilder **ab, size_t initialCount, size_t unitSize);
 extern bool ab_add(ArrayBuilder *ab, void *data);

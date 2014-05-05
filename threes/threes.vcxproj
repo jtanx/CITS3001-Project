@@ -83,6 +83,7 @@
   <ItemGroup>
     <None Include="..\testing\exampleinput.txt" />
     <None Include="..\testing\exampleinput2.txt" />
+    <None Include="..\testing\exampleinput3.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

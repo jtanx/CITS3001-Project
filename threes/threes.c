@@ -29,7 +29,7 @@ bool is_valid_tile(Tile t) {
 	return t <= 2 || (!(t % 3) && IS_POWER_2(v));
 }
 
-bool load_file(Board *b, char *f) {
+bool load_file(Board *b, Sequence *s, char *f) {
 	ArrayBuilder *ab;
 	FILE *fp;
 	char buf[BUFSIZ], *tok, *next;
@@ -58,7 +58,7 @@ bool load_file(Board *b, char *f) {
 				fclose(fp);
 				return false;
 			}
-			b->current[i * BOARD_SIZE + j] = v;
+			b->it[i * BOARD_SIZE + j] = v;
 			tok = strtok_r(NULL, " ", &next);
 		}
 	}
@@ -87,23 +87,23 @@ bool load_file(Board *b, char *f) {
 	fclose(fp);
 
 	//Load up the tile sequence
-	b->sequence = ab_finalise(&ab, &b->n_sequence);
+	s->it = ab_finalise(&ab, &s->count);
 	return true;
 }
 
 void print_board(Board *b) {
 	uint8_t i;
 	for (i = 0; i < BOARD_SPACE; i++) {
-		printf("%3d ", b->current[i]);
+		printf("%3d ", b->it[i]);
 		if ((i+1) % BOARD_SIZE == 0)
 			printf("\n");
 	}
 }
 
-void print_tiles(Board *b) {
+void print_tiles(Sequence *s) {
 	size_t i;
-	for (i = 0; i < b->n_sequence; i++)
-		printf("%d ", b->sequence[i]);
+	for (i = 0; i < s->count; i++)
+		printf("%d ", s->it[i]);
 	printf("\n");
 }
 
@@ -131,7 +131,7 @@ bool shift_valid(Tile from, Tile to) {
  * insertion point.
  * O(n^2) performance, where n is the width of the board 
  */
-void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
+void insert_sequence(Board *b, Sequence *s, uint8_t seq_rows, const uint8_t *seq_trn) {
 	uint8_t i, j;
 
 	//If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
@@ -141,10 +141,10 @@ void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
 				uint8_t idx = seq_trn[i * BOARD_SIZE + j];
 				//Three-way comparison
-				if (b->current[idx] < min_value) {
-					min_value = b->current[idx];
+				if (b->it[idx] < min_value) {
+					min_value = b->it[idx];
 					seq_rows &= ~((1 << j) - 1); //All rows previous are out of the running
-				} else if (b->current[idx] > min_value) {
+				} else if (b->it[idx] > min_value) {
 					seq_rows ^= 1 << j; //This row is no longer in the running
 				}
 			}
@@ -156,13 +156,13 @@ void insert_sequence(Board *b, uint8_t seq_rows, const uint8_t *seq_trn) {
 	while (seq_rows >>= 1) j++;
 
 	//It seems that the game ends when the sequence is exhausted!
-	b->current[seq_trn[j]] = b->sequence[b->c_sequence++];
+	b->it[seq_trn[j]] = s->it[b->c_sequence++];
 }
 
 /**
  * Takes 2 * n^2 time in the worst case, where n is the width of the board.
  */
-void move(Board *b, char m) {
+void move(Board *b, Sequence *s, char m) {
 	bool local_shift = false;
 	const uint8_t *trn, *seq_trn;
 	uint8_t i, j, seq_rows = 0;
@@ -187,13 +187,13 @@ void move(Board *b, char m) {
 			uint8_t pidx = trn[i * BOARD_SIZE + j-1];
 
 			if (local_shift) {
-				b->current[pidx] = b->current[idx];
-				b->current[idx] = 0;
-			} else if(shift_valid(b->current[idx], b->current[pidx])) {
+				b->it[pidx] = b->it[idx];
+				b->it[idx] = 0;
+			} else if(shift_valid(b->it[idx], b->it[pidx])) {
 				seq_rows |= (1 << (BOARD_SIZE - i - 1)); //Include row which shift occurred in
 				local_shift = true;
-				b->current[pidx] += b->current[idx];
-				b->current[idx] = 0;
+				b->it[pidx] += b->it[idx];
+				b->it[idx] = 0;
 			}
 		}
 		local_shift = false;
@@ -203,8 +203,8 @@ void move(Board *b, char m) {
 		printf("No change!\n");
 		b->finished = true;
 	} else {
-		insert_sequence(b, seq_rows, seq_trn);
-		if (b->c_sequence == b->n_sequence) {
+		insert_sequence(b, s, seq_rows, seq_trn);
+		if (b->c_sequence == s->count) {
 			b->finished = true;
 		}
 	}
@@ -227,13 +227,14 @@ uint32_t tile_score(Tile t) {
 void print_score(Board *b) {
 	int i, score = 0;
 	for (i = 0; i < BOARD_SPACE; i++) {
-		score += tile_score(b->current[i]);
+		score += tile_score(b->it[i]);
 	}
 	printf("%d\n", score);
 }
 
 int main(int argc, char *argv[]) {
 	Board b = {0};
+	Sequence s = {0};
 	char buf[BUFSIZ];
 
 #ifdef _DEBUG
@@ -245,12 +246,12 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if (!load_file(&b, argv[1])) {
+	if (!load_file(&b, &s, argv[1])) {
 		return 1;
 	}
 
 	print_board(&b);
-	print_tiles(&b);
+	print_tiles(&s);
 
 	printf("\nEnter 'q' to quit. Enter 'l', 'r', 'u', 'd' to move.\nMove: ");
 	while (fgets(buf, BUFSIZ, stdin)) {
@@ -266,7 +267,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			int i = 0;
 			while (buf[i] && !b.finished) {
-				move(&b, buf[i++]);
+				move(&b, &s, buf[i++]);
 				printf("\n");
 			}
 			if (b.finished) {
