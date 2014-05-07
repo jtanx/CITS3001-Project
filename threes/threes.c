@@ -88,6 +88,10 @@ bool load_file(Board *b, Sequence *s, char *f) {
 
 	//Load up the tile sequence
 	s->it = ab_finalise(&ab, &s->count);
+	if (!s->it) {
+		printf("Memory allocation failure\n");
+		return false;
+	}
 	return true;
 }
 
@@ -140,7 +144,6 @@ void insert_sequence(Board *b, Sequence *s, uint8_t seq_rows, const uint8_t *seq
 		for (j = 0; j < BOARD_SIZE; j++) {
 			if (seq_rows & (1 << j)) { //Is a row that sequence can be inserted into
 				uint8_t idx = seq_trn[i * BOARD_SIZE + j];
-				//Three-way comparison
 				if (b->it[idx] < min_value) {
 					min_value = b->it[idx];
 					seq_rows &= ~((1 << j) - 1); //All rows previous are out of the running
@@ -155,22 +158,20 @@ void insert_sequence(Board *b, Sequence *s, uint8_t seq_rows, const uint8_t *seq
 	j = 0;
 	while (seq_rows >>= 1) j++;
 
-	//It seems that the game ends when the sequence is exhausted!
 	b->it[seq_trn[j]] = s->it[b->c_sequence++];
 }
 
 /**
  * Takes 2 * n^2 time in the worst case, where n is the width of the board.
  */
-void move(Board *b, Sequence *s, char m) {
+bool move(Board *b, Sequence *s, char m) {
 	bool local_shift = false;
 	const uint8_t *trn, *seq_trn;
 	uint8_t i, j, seq_rows = 0;
 	//seq_rows is a bitmask for rows that should be considered for sequence insert
 
 	if (b->finished) {
-		printf("Cannot move a finished board!");
-		return;
+		return false; //hurr durr
 	}
 
 	switch (tolower(m)) {
@@ -178,7 +179,7 @@ void move(Board *b, Sequence *s, char m) {
 		case 'u': trn = g_trn[1], seq_trn = g_trn[2]; break;
 		case 'r': trn = g_trn[2], seq_trn = g_trn[1]; break;
 		case 'd': trn = g_trn[3], seq_trn = g_trn[0]; break;
-		default: return;
+		default: return false;
 	}
 
 	for (i = 0; i < BOARD_SIZE; i++) {
@@ -200,15 +201,16 @@ void move(Board *b, Sequence *s, char m) {
 	}
 
 	if (!seq_rows) { //If seq_rows == 0, no rows have been shifted
-		printf("No change!\n");
+		//printf("No change!\n");
 		b->finished = true;
+		return false;
 	} else {
 		insert_sequence(b, s, seq_rows, seq_trn);
 		if (b->c_sequence == s->count) {
-			b->finished = true;
+			b->finished = true; //May have to move this check to after to match the case of checking if seq_rows is 0.
 		}
 	}
-	print_board(b);
+	return true;
 }
 
 uint32_t tile_score(Tile t) {
@@ -224,6 +226,20 @@ uint32_t tile_score(Tile t) {
 	return 0;
 }
 
+Board *board_dup(Board *b) {
+	Board *n = malloc(sizeof(Board));
+	memcpy(n, b, sizeof(Board));
+	return n;
+}
+
+uint32_t board_score(Board *b) {
+	uint32_t i, score;
+	for (i = 0, score = 0; i < BOARD_SPACE; i++) {
+		score += tile_score(b->it[i]);
+	}
+	return score;
+}
+
 void print_score(Board *b) {
 	int i, score = 0;
 	for (i = 0; i < BOARD_SPACE; i++) {
@@ -231,6 +247,61 @@ void print_score(Board *b) {
 	}
 	printf("%d\n", score);
 }
+
+
+#define DEPTH_LIMIT 15
+void solve_idfs(Board *initial, Sequence *s) {
+	int i, j;
+	Board *best = NULL;
+	uint32_t best_score = 0;
+
+	for (i = DEPTH_LIMIT-1; i < DEPTH_LIMIT; i++) {
+		Stack *t = NULL;
+		st_push(&t, board_dup(initial));
+		while (t != NULL) {
+			Board *b = st_pop(&t);
+			Board *next[4];
+			const char *directions = "lurd"; //lewd
+			
+			if (b->depth + 1 < DEPTH_LIMIT) {
+				for (j = 0; j < 4; j++) {
+					next[j] = board_dup(b);
+					move(next[j], s, directions[j]);
+
+					if (next[j]->finished) {
+						//check score
+						uint32_t score = board_score(next[j]);
+						if (!best || score > best_score) {
+							if (best)
+								free(best); //yuck
+							best = next[j];
+						} else {
+							free(next[j]);
+						}
+					} else {
+						next[j]->depth++;
+						st_push(&t, next[j]);
+					}
+				}
+				free(b);
+			} else {
+				uint32_t score = board_score(b);
+				if (!best || score > best_score) {
+					if (best)
+						free(best);
+					best = b;
+				} else {
+					free(b);
+				}
+			}
+		}
+	}
+
+	print_board(best);
+	print_score(best);
+
+}
+
 
 int main(int argc, char *argv[]) {
 	Board b = {0};
@@ -253,6 +324,8 @@ int main(int argc, char *argv[]) {
 	print_board(&b);
 	print_tiles(&s);
 
+	solve_idfs(&b, &s);
+
 	printf("\nEnter 'q' to quit. Enter 'l', 'r', 'u', 'd' to move.\nMove: ");
 	while (fgets(buf, BUFSIZ, stdin)) {
 		if (tolower(*buf) == 'q') {
@@ -268,6 +341,7 @@ int main(int argc, char *argv[]) {
 			int i = 0;
 			while (buf[i] && !b.finished) {
 				move(&b, &s, buf[i++]);
+				print_board(&b);
 				printf("\n");
 			}
 			if (b.finished) {
@@ -279,5 +353,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+
+	free(s.it);
 	return 0;
 }

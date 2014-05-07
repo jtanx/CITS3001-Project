@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 typedef struct ArrayBuilder ArrayBuilder;
+typedef struct Stack Stack;
 
 #define BOARD_SIZE 4
 #define BOARD_SPACE (BOARD_SIZE * BOARD_SIZE)
@@ -27,6 +28,7 @@ typedef struct Board {
 	Tile it[BOARD_SPACE];
 	size_t c_sequence;
 	bool finished;
+	size_t depth;
 } Board;
 
 typedef struct Sequence {
@@ -38,5 +40,8 @@ extern bool ab_init(ArrayBuilder **ab, size_t initialCount, size_t unitSize);
 extern bool ab_add(ArrayBuilder *ab, void *data);
 extern int ab_length(ArrayBuilder *ab);
 extern void *ab_finalise(ArrayBuilder **ab, size_t *count);
+extern bool st_push(Stack **s, void *item);
+extern void* st_peek(Stack *s);
+extern void* st_pop(Stack **s);
 
 #endif

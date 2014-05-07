@@ -90,3 +90,46 @@ void *ab_finalise(ArrayBuilder **ab, size_t *count)
 }
 
 /**********************End ArrayBuilder**********************/
+
+/***************************Stack***************************/
+struct Stack {
+	void *item;
+	struct Stack *next;
+};
+
+bool st_push(Stack **s, void *item) {
+	Stack *n;
+	if (!s)
+		return false;
+
+	if ((n = calloc(1, sizeof(Stack)))) {
+		n->item = item;
+		n->next = *s;
+		*s = n;
+		return true;
+	}
+	return false;
+}
+
+void* st_peek(Stack *s) {
+	if (s) {
+		return s->item;
+	}
+	return NULL;
+}
+
+void* st_pop(Stack **s) {
+	Stack *t;
+	void *item;
+	if (!s && !*s)
+		return NULL;
+
+	t = *s;
+	item = t->item;
+	*s = t->next;
+
+	free(t);
+	return item;
+}
+
+/***************************End Stack***************************/
