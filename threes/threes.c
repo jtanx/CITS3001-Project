@@ -241,16 +241,12 @@ uint32_t board_score(Board *b) {
 }
 
 void print_score(Board *b) {
-	int i, score = 0;
-	for (i = 0; i < BOARD_SPACE; i++) {
-		score += tile_score(b->it[i]);
-	}
-	printf("%d\n", score);
+	printf("%d\n", board_score(b));
 }
 
+#define DEPTH_LIMIT 5
 
-#define DEPTH_LIMIT 15
-void solve_idfs(Board *initial, Sequence *s) {
+Board *solve_idfs(Board *initial, Sequence *s) {
 	int i, j;
 	Board *best = NULL;
 	uint32_t best_score = 0;
@@ -261,7 +257,7 @@ void solve_idfs(Board *initial, Sequence *s) {
 		while (t != NULL) {
 			Board *b = st_pop(&t);
 			Board *next[4];
-			const char *directions = "lurd"; //lewd
+			const char *directions = "lurd"; 
 			
 			if (b->depth + 1 < DEPTH_LIMIT) {
 				for (j = 0; j < 4; j++) {
@@ -299,12 +295,12 @@ void solve_idfs(Board *initial, Sequence *s) {
 
 	print_board(best);
 	print_score(best);
-
+	return best;
 }
 
 
 int main(int argc, char *argv[]) {
-	Board b = {0};
+	Board b = {0}, *cur;
 	Sequence s = {0};
 	char buf[BUFSIZ];
 
@@ -324,7 +320,18 @@ int main(int argc, char *argv[]) {
 	print_board(&b);
 	print_tiles(&s);
 
-	solve_idfs(&b, &s);
+	cur = board_dup(&b);
+	while (!cur->finished) {
+		Board *next = solve_idfs(cur, &s);
+		if (!next) {
+			cur->finished = true;
+		} else {
+			free(cur);
+			cur = next;
+			cur->depth = 0;
+		}
+	}
+	
 
 	printf("\nEnter 'q' to quit. Enter 'l', 'r', 'u', 'd' to move.\nMove: ");
 	while (fgets(buf, BUFSIZ, stdin)) {
