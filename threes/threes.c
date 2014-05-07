@@ -244,21 +244,45 @@ uint32_t utility(Board *b, Sequence *s) {
 	uint32_t score = board_score(b);
 	uint32_t consecutive = 0;
 	uint8_t i, j;
+	uint8_t nnzc[4] = {0};
+	uint8_t nnz = 0;
+
+	bool nearing_final = ((100 * b->c_sequence) / s->count) > 95;
+	bool halfway = ((100 * b->c_sequence) / s->count) > 70;
 
 	for (i = 0; i < BOARD_SIZE-1; i++) {
+		uint8_t nnzr = 0;
 		for (j = 0; j < BOARD_SIZE-1; j++) {
 			uint32_t c = b->it[i*BOARD_SIZE+j];
 			uint32_t r = b->it[i*BOARD_SIZE+j+1];
 			uint32_t d = b->it[(i+1)*BOARD_SIZE+j];
 			uint32_t dg = b->it[(i+1)*BOARD_SIZE+j+1];
-			consecutive += (c > 2) * ((c == r) + (c == d) + (c == dg)) * 2;
-			consecutive -= (c == 1) * ((c == r) + (c == d) + (c == dg));
-			consecutive += (c > 3 && c < 24) * 4;
+
+			nnz += c > 0;
+			nnzc[j] += c > 0;
+			
+			consecutive += (c > 2) * ((c == r) + (c == d) + (c == dg)) * 2; //Can combine tiles
+			consecutive -= (c == 1) * ((c == r) + (c == d) + (c == dg)) * 1;
+			consecutive += (c > 3 && c < 24 || (c >= 24 && nearing_final)) * 4;
 			consecutive -= (c > 2) && ( (r < 3) + (d < 3) + (dg < 3)) * 3;
+			//consecutive += ((c == 2) * ((r == 1) + (d == 1)) + (c == 1) * ((r == 2) + (d == 2)));
+			
+			nnzr += c > 0;
 		}
+		nnzr += (b->it[i*BOARD_SIZE + j] > 0);
+		nnzc[j] += (b->it[i*BOARD_SIZE + j] > 0);
+		consecutive -= !halfway * (nnzr == 4);
+		//if (nnzr == 4) printf("JA\n");
 	}
+
+	for (i =0; i < 4; i++) {
+		nnzc[i] += b->it[(BOARD_SIZE-1)*(BOARD_SIZE)+i] > 0;
+		consecutive -= !halfway * (nnzc[i] == 4);
+		//if (nnzc[i] == 4) printf("JAJA\n");
+	}
+
 	//printf("%d\n", consecutive);
-	return score + consecutive;
+	return score+consecutive;
 }
 
 void print_score(Board *b) {
@@ -268,58 +292,57 @@ void print_score(Board *b) {
 #define DEPTH_LIMIT 7
 
 Board *solve_idfs(Board *initial, Sequence *s) {
-	int i, j;
+	int j;
 	Board *best = board_dup(initial);
 	uint32_t best_score = utility(best, s);
 
 	while (!best || !best->finished) {
+		Stack *t = NULL;
 		if (best) {
 			best->depth = 0;
 		}
-
-		for (i = DEPTH_LIMIT-1; i < DEPTH_LIMIT; i++) {
-			Stack *t = NULL;
-			st_push(&t, board_dup(best));
-			while (t != NULL) {
-				Board *b = st_pop(&t);
-				Board *next[4];
-				const char *directions = "lurd"; 
+		
+		st_push(&t, board_dup(best));
+		while (t != NULL) {
+			Board *b = st_pop(&t);
+			Board *next[4];
+			const char *directions = "lurd"; 
 			
-				if (b->depth + 1 < DEPTH_LIMIT) {
-					for (j = 0; j < 4; j++) {
-						next[j] = board_dup(b);
-						move(next[j], s, directions[j]);
+			if (b->depth + 1 < DEPTH_LIMIT) {
+				for (j = 0; j < 4; j++) {
+					next[j] = board_dup(b);
+					move(next[j], s, directions[j]);
 
-						if (next[j]->finished) {
-							//check score
-							uint32_t score = utility(next[j], s);
-							if (!best || score > best_score) {
-								if (best)
-									free(best); //yuck
-								best_score = score;
-								best = next[j];
-							} else {
-								free(next[j]);
-							}
+					if (next[j]->finished) {
+						//check score
+						uint32_t score = utility(next[j], s);
+						if (!best || score >= best_score) {
+							if (best)
+								free(best); //yuck
+							best_score = score;
+							best = next[j];
 						} else {
-							next[j]->depth++;
-							st_push(&t, next[j]);
+							free(next[j]);
 						}
-					}
-					free(b);
-				} else {
-					uint32_t score = utility(b,s);
-					if (!best || score > best_score) {
-						if (best)
-							free(best);
-						best_score = score;
-						best = b;
 					} else {
-						free(b);
+						next[j]->depth++;
+						st_push(&t, next[j]);
 					}
+				}
+				free(b);
+			} else {
+				uint32_t score = utility(b,s);
+				if (!best || score >= best_score) {
+					if (best)
+						free(best);
+					best_score = score;
+					best = b;
+				} else {
+					free(b);
 				}
 			}
 		}
+		
 	}
 
 	print_board(best);
