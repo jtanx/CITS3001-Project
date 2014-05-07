@@ -240,54 +240,83 @@ uint32_t board_score(Board *b) {
 	return score;
 }
 
+uint32_t utility(Board *b, Sequence *s) {
+	uint32_t score = board_score(b);
+	uint32_t consecutive = 0;
+	uint8_t i, j;
+
+	for (i = 0; i < BOARD_SIZE-1; i++) {
+		for (j = 0; j < BOARD_SIZE-1; j++) {
+			uint32_t c = b->it[i*BOARD_SIZE+j];
+			uint32_t r = b->it[i*BOARD_SIZE+j+1];
+			uint32_t d = b->it[(i+1)*BOARD_SIZE+j];
+			uint32_t dg = b->it[(i+1)*BOARD_SIZE+j+1];
+			consecutive += (c > 2) * ((c == r) + (c == d) + (c == dg)) * 2;
+			consecutive -= (c == 1) * ((c == r) + (c == d) + (c == dg));
+			consecutive += (c > 3 && c < 24) * 4;
+			consecutive -= (c > 2) && ( (r < 3) + (d < 3) + (dg < 3)) * 3;
+		}
+	}
+	//printf("%d\n", consecutive);
+	return score + consecutive;
+}
+
 void print_score(Board *b) {
 	printf("%d\n", board_score(b));
 }
 
-#define DEPTH_LIMIT 5
+#define DEPTH_LIMIT 7
 
 Board *solve_idfs(Board *initial, Sequence *s) {
 	int i, j;
-	Board *best = NULL;
-	uint32_t best_score = 0;
+	Board *best = board_dup(initial);
+	uint32_t best_score = utility(best, s);
 
-	for (i = DEPTH_LIMIT-1; i < DEPTH_LIMIT; i++) {
-		Stack *t = NULL;
-		st_push(&t, board_dup(initial));
-		while (t != NULL) {
-			Board *b = st_pop(&t);
-			Board *next[4];
-			const char *directions = "lurd"; 
+	while (!best || !best->finished) {
+		if (best) {
+			best->depth = 0;
+		}
+
+		for (i = DEPTH_LIMIT-1; i < DEPTH_LIMIT; i++) {
+			Stack *t = NULL;
+			st_push(&t, board_dup(best));
+			while (t != NULL) {
+				Board *b = st_pop(&t);
+				Board *next[4];
+				const char *directions = "lurd"; 
 			
-			if (b->depth + 1 < DEPTH_LIMIT) {
-				for (j = 0; j < 4; j++) {
-					next[j] = board_dup(b);
-					move(next[j], s, directions[j]);
+				if (b->depth + 1 < DEPTH_LIMIT) {
+					for (j = 0; j < 4; j++) {
+						next[j] = board_dup(b);
+						move(next[j], s, directions[j]);
 
-					if (next[j]->finished) {
-						//check score
-						uint32_t score = board_score(next[j]);
-						if (!best || score > best_score) {
-							if (best)
-								free(best); //yuck
-							best = next[j];
+						if (next[j]->finished) {
+							//check score
+							uint32_t score = utility(next[j], s);
+							if (!best || score > best_score) {
+								if (best)
+									free(best); //yuck
+								best_score = score;
+								best = next[j];
+							} else {
+								free(next[j]);
+							}
 						} else {
-							free(next[j]);
+							next[j]->depth++;
+							st_push(&t, next[j]);
 						}
-					} else {
-						next[j]->depth++;
-						st_push(&t, next[j]);
 					}
-				}
-				free(b);
-			} else {
-				uint32_t score = board_score(b);
-				if (!best || score > best_score) {
-					if (best)
-						free(best);
-					best = b;
-				} else {
 					free(b);
+				} else {
+					uint32_t score = utility(b,s);
+					if (!best || score > best_score) {
+						if (best)
+							free(best);
+						best_score = score;
+						best = b;
+					} else {
+						free(b);
+					}
 				}
 			}
 		}
@@ -320,18 +349,7 @@ int main(int argc, char *argv[]) {
 	print_board(&b);
 	print_tiles(&s);
 
-	cur = board_dup(&b);
-	while (!cur->finished) {
-		Board *next = solve_idfs(cur, &s);
-		if (!next) {
-			cur->finished = true;
-		} else {
-			free(cur);
-			cur = next;
-			cur->depth = 0;
-		}
-	}
-	
+	cur = solve_idfs(&b, &s);
 
 	printf("\nEnter 'q' to quit. Enter 'l', 'r', 'u', 'd' to move.\nMove: ");
 	while (fgets(buf, BUFSIZ, stdin)) {
