@@ -1,14 +1,21 @@
 package threes;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
+import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  *
  * @author
  */
 public class Board {
-  private static final int BOARD_WIDTH = 4;
-  private static final int BOARD_SPACE = BOARD_WIDTH * BOARD_WIDTH;
+  public static final int BOARD_WIDTH = 4;
+  public static final int BOARD_SPACE = BOARD_WIDTH * BOARD_WIDTH;
   private static final char[][] g_trn = {
     {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, //Left
     {0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15}, //Up
@@ -20,7 +27,23 @@ public class Board {
     LEFT,
     RIGHT,
     UP,
-    DOWN
+    DOWN;
+    
+    public static Direction[] parse(String s) {
+      List<Direction> m = new ArrayList<Direction>();
+      Direction[] d = new Direction[0];
+      for (char c : s.toCharArray()) {
+        switch(Character.toLowerCase(c)) {
+          case 'l': m.add(LEFT); break;
+          case 'u': m.add(UP); break;
+          case 'r': m.add(RIGHT); break;
+          case 'd': m.add(DOWN); break;
+        }
+      }
+      
+      return m.toArray(d);
+      //return (Direction[]) m.toArray();
+    }
   };
   
   private int[] it;
@@ -34,20 +57,16 @@ public class Board {
     it = Arrays.copyOf(board, BOARD_SPACE);
   }
   
-  public Board(String file) {
-    it = new int[BOARD_SPACE];
-  }
-  
-  boolean shift_valid(int from, int to) {
+  private boolean shift_valid(int from, int to) {
     return (from != 0 && to == 0) || (from == 1 && to == 2)
             || (from == 2 && to == 1) || (from > 2 && from == to);
   }
   
-  boolean is_pow2(int v) {
+  private boolean is_pow2(int v) {
     return ((v) != 0) && (((v) & ((v) - 1) ) == 0);
   }
   
-  void insert_sequence(int[] s, char seq_rows, char seq_trn[]) {
+  private void insert_sequence(int[] s, char seq_rows, char seq_trn[]) {
     char i, j;
     //If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
     for (i = 0; i < BOARD_WIDTH && !is_pow2(seq_rows); i++) {
@@ -79,8 +98,9 @@ public class Board {
     char seq_rows = 0;
     char[] trn, seq_trn;
     
-    if (finished) {
-      return false;
+    if (c_sequence >= s.length || finished) {
+        finished = true; //May have to move this check to after to match the case of checking if seq_rows is 0.
+        return false;
     }
     
     switch(d) {
@@ -116,14 +136,11 @@ public class Board {
       return false;
     } else {
       insert_sequence(s, seq_rows, seq_trn);
-      if (c_sequence == s.length) {
-        finished = true; //May have to move this check to after to match the case of checking if seq_rows is 0.
-      }
     }
     return true;
   }
   
-  int tile_score(int t) {
+  public int tile_score(int t) {
     if (t == 1 || t == 2) {
       return 1;
     } else if (t > 2) {
@@ -138,11 +155,26 @@ public class Board {
     return 0;
   }
 
-  int score() {
+  public int score() {
     int i, score;
     for (i = 0, score = 0; i < BOARD_SPACE; i++) {
       score += tile_score(it[i]);
     }
     return score;
+  }
+  
+  @Override
+  public String toString() {
+    Formatter f = new Formatter();
+    String nl = System.getProperty("line.separator");
+    
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+      for (int j = 0; j < BOARD_WIDTH; j++) {
+        f.format("%3d ", it[i*BOARD_WIDTH + j]);
+      }
+      f.format("%s", nl);
+    }
+    
+    return f.toString();
   }
 }
