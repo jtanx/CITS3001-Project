@@ -1,13 +1,12 @@
 package threes;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  *
@@ -24,10 +23,19 @@ public class Board {
   };
   
   public enum Direction {
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN;
+    LEFT("L"),
+    RIGHT("R"),
+    UP("U"),
+    DOWN("D");
+    
+    private String t;
+    private Direction(String t) {
+      this.t = t;
+    }
+    
+    @Override public String toString() {
+      return t;
+    }
     
     public static Direction[] parse(String s) {
       List<Direction> m = new ArrayList<Direction>();
@@ -42,19 +50,29 @@ public class Board {
       }
       
       return m.toArray(d);
-      //return (Direction[]) m.toArray();
     }
   };
   
   private int[] it;
   private int c_sequence;
   private boolean finished;
+  private int depth;
+  private StringBuilder path;
   
   public Board(int[] board) {
     if (board.length != BOARD_SPACE) {
       throw new IllegalArgumentException("Invalid input board size");
     }
     it = Arrays.copyOf(board, BOARD_SPACE);
+    path = new StringBuilder();
+  }
+  
+  public Board(Board o) {
+    this.it = Arrays.copyOf(o.it, BOARD_SPACE);
+    this.c_sequence = o.c_sequence;
+    this.finished = o.finished;
+    this.depth = o.depth;
+    this.path = new StringBuilder(o.path);
   }
   
   private boolean shift_valid(int from, int to) {
@@ -66,7 +84,7 @@ public class Board {
     return ((v) != 0) && (((v) & ((v) - 1) ) == 0);
   }
   
-  private void insert_sequence(int[] s, char seq_rows, char seq_trn[]) {
+  private char insert_mask(int[] s, char seq_rows, char seq_trn[]) {
     char i, j;
     //If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
     for (i = 0; i < BOARD_WIDTH && !is_pow2(seq_rows); i++) {
@@ -84,17 +102,11 @@ public class Board {
       }
     }
 
-    //Seems to work... May have to check for the 'most clockwise' rule
-    j = 0;
-    while ((seq_rows >>= 1) != 0) {
-      j++;
-    }
-
-    it[seq_trn[j]] = s[c_sequence++];
+    return seq_rows;
   }
   
   public boolean move(int[] s, Direction d) {
-    boolean local_shift = false;
+    boolean local_shift = false, insert_last;
     char seq_rows = 0;
     char[] trn, seq_trn;
     
@@ -104,10 +116,10 @@ public class Board {
     }
     
     switch(d) {
-      case LEFT: trn = g_trn[0]; seq_trn = g_trn[3]; break;
-      case UP: trn = g_trn[1]; seq_trn = g_trn[2]; break;
-      case RIGHT: trn = g_trn[2]; seq_trn = g_trn[1]; break;
-      case DOWN: trn = g_trn[3]; seq_trn = g_trn[0]; break;
+      case LEFT: trn = g_trn[0]; seq_trn = g_trn[3]; insert_last = false; break;
+      case UP: trn = g_trn[1]; seq_trn = g_trn[2]; insert_last = true; break;
+      case RIGHT: trn = g_trn[2]; seq_trn = g_trn[1]; insert_last = false; break;
+      case DOWN: trn = g_trn[3]; seq_trn = g_trn[0]; insert_last = true; break;
       default:
         throw new IllegalArgumentException("I don't even");
     }
@@ -135,7 +147,19 @@ public class Board {
       finished = true;
       return false;
     } else {
-      insert_sequence(s, seq_rows, seq_trn);
+      char j = 0;
+      seq_rows = insert_mask(s, seq_rows, seq_trn);
+      if (insert_last)
+        while (((seq_rows) >>= 1) != 0) j++;
+      else while ((seq_rows & 1) != 1) {
+        seq_rows >>= 1; j++;
+      }
+      
+      it[seq_trn[j]] = s[c_sequence++];      
+      path.append(d);
+      if (c_sequence >= s.length) {
+        finished = true;
+      }
     }
     return true;
   }
@@ -161,6 +185,141 @@ public class Board {
       score += tile_score(it[i]);
     }
     return score;
+  }
+  
+  public boolean finished() {
+    return finished;
+  }
+  
+  private int utility(int[] s) {
+    int score = score();
+    int consecutive = 0;
+    boolean nearing_final = ((100 * c_sequence) / s.length) > 95;
+    float pc = ((100.0f * c_sequence) / s.length);
+    
+    for (int i = 0; i < BOARD_WIDTH - 1; i++) {
+      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
+        int c = it[i * BOARD_WIDTH + j];
+        int r = it[i * BOARD_WIDTH + j + 1];
+        int d = it[(i + 1) * BOARD_WIDTH + j];
+        int dg = it[(i + 1) * BOARD_WIDTH + j + 1];
+        int fac;
+
+        if (c == 1) {
+          fac = c == r ? 1 : 0;
+          fac += c == d ? 1 : 0;
+          fac += c == dg ? 1 : 0;
+          consecutive -= fac;
+        } else if (c > 2) {
+          fac = c == r ? 1 : 0;
+          fac += c == d ? 1 : 0;
+          fac += c == dg ? 1 : 0;
+          consecutive += fac * 2;
+          
+          fac = r < 3 ? 1 : 0;
+          fac += d < 3 ? 1 : 0;
+          fac += dg < 3 ? 1 : 0;
+          consecutive -= fac * 3;
+        } else if (c > 3 && c < 24 || (c >= 24 && nearing_final)) {
+          consecutive += 4;
+        }
+      }
+    }
+    return (int)(score*pc) + consecutive;
+  }
+  
+  private void solve_dfs(int depth, int[] s) {
+    if (depth > 7) {
+      
+    }
+  }
+  
+  public void solve_dfs(int[] s) {
+    Set<Board> candidate = new HashSet<Board>();
+    Set<Board> best = new HashSet<Board>();
+    int best_score, candidate_score = -1;
+    Stack<Board> rem = new Stack<Board>();
+    int count = 0;
+    
+    best_score = this.utility(s);
+    best.add(this);
+    while (!best.isEmpty()) { //Got candidate paths left to follow
+      if (count++ % 10 == 0) {
+        if (!best.isEmpty()) {
+          for (Board b : best ) {
+            System.out.println(b);
+            System.out.println("SCORE: " + Integer.toString(b.score()));
+          }
+        }
+      }
+      for (Board b : best) {
+        b.depth = 0;
+        rem.push(b);
+      }
+      best.clear();
+      
+      while (!rem.isEmpty()) {
+        Board c = rem.pop();
+        
+        if (c.depth + 1 < 10) {
+          Board[] next = new Board[4];
+          Direction[] nextd = {Direction.LEFT, Direction.UP, 
+                               Direction.RIGHT, Direction.DOWN};
+          for (int i = 0; i < 4; i++) {
+            next[i] = new Board(c);
+            next[i].move(s, nextd[i]);
+            next[i].depth += 1;
+            
+            if (next[i].finished()) {
+              int score = next[i].score();
+              if (score > candidate_score) {
+                candidate.clear();
+                candidate_score = score;
+                candidate.add(next[i]);
+              } else if (score == candidate_score) {
+                candidate.add(next[i]);
+              }
+            } else {
+              rem.push(next[i]);
+            }
+          }
+        } else {
+          int score = c.utility(s);
+          if (score > best_score) {
+            best.clear();
+            best_score = score;
+            best.add(c);
+          } else if (score == best_score) {
+            best.add(c);
+          }
+        }
+      }
+    }
+    
+    for (Board b : candidate) {
+      System.out.println(b);
+      System.out.println(b.path.toString());
+      break;
+    }
+    System.out.println(candidate.size());
+    System.out.println(candidate_score);
+    
+  }
+  
+  @Override public boolean equals(Object o) {
+    if (o != null && o instanceof Board) {
+      return this.c_sequence == ((Board)o).c_sequence &&
+             Arrays.equals(this.it, ((Board)o).it);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 79 * hash + Arrays.hashCode(this.it);
+    hash = 79 * hash + this.c_sequence;
+    return hash;
   }
   
   @Override
