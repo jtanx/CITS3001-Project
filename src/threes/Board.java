@@ -105,6 +105,14 @@ public class Board {
     return seq_rows;
   }
   
+  public int nMoves() {
+    return c_sequence;
+  }
+  
+  public String moves() {
+    return path.toString();
+  }
+  
   public boolean move(int[] s, Direction d) {
     boolean local_shift = false, insert_last;
     char seq_rows = 0;
@@ -191,7 +199,34 @@ public class Board {
     return finished;
   }
   
-  private int monotonicity() {
+  public void finished(boolean is) {
+    finished = is;
+  }
+  
+  public int zeros() {
+    int n_z = 0;
+    for (int i = 0; i < BOARD_SPACE; i++)
+      if (it[i] == 0)
+        n_z++;
+    return n_z;
+  }
+  
+  public int mean() {
+    int t = 0;
+    for (int i = 0; i < BOARD_SPACE; i++)
+      t += it[i];
+    return t / BOARD_SPACE;
+  }
+  
+  public int median() {
+    int[] t = Arrays.copyOf(it, BOARD_SPACE);
+    int m = BOARD_SPACE/2;
+    Arrays.sort(t);
+    return (t[m-1] + t[m]) / 2;
+    
+  }
+  
+  public int monotonicity() {
     int l = 0, u = 0, r = 0, d = 0;
     
     for (int i = 0; i < BOARD_WIDTH; i++) {

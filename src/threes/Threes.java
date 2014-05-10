@@ -102,6 +102,11 @@ public class Threes {
     }
     System.out.println(b.score());
     System.out.println(b.finished());
-    new Board(bt).solve_dfs(s);
+    //new Board(bt).solve_dfs(s);
+    Solver solver = new Solver();
+    Board bs = solver.solve_idfs(s, new Board(bt));
+    System.out.println(bs);
+    System.out.println(bs.score());
+    System.out.println(bs.moves());
   }
 }
