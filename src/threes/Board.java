@@ -84,7 +84,7 @@ public class Board {
     return ((v) != 0) && (((v) & ((v) - 1) ) == 0);
   }
   
-  private char insert_mask(int[] s, char seq_rows, char seq_trn[]) {
+  private char insert_mask(char seq_rows, char seq_trn[]) {
     char i, j;
     //If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
     for (i = 0; i < BOARD_WIDTH && !is_pow2(seq_rows); i++) {
@@ -148,7 +148,7 @@ public class Board {
       return false;
     } else {
       char j = 0;
-      seq_rows = insert_mask(s, seq_rows, seq_trn);
+      seq_rows = insert_mask(seq_rows, seq_trn);
       if (insert_last)
         while (((seq_rows) >>= 1) != 0) j++;
       else while ((seq_rows & 1) != 1) {
@@ -191,47 +191,56 @@ public class Board {
     return finished;
   }
   
-  private int utility(int[] s) {
-    int score = score();
-    int consecutive = 0;
-    boolean nearing_final = ((100 * c_sequence) / s.length) > 95;
-    float pc = ((100.0f * c_sequence) / s.length);
+  private int monotonicity() {
+    int l = 0, u = 0, r = 0, d = 0;
     
-    for (int i = 0; i < BOARD_WIDTH - 1; i++) {
+    for (int i = 0; i < BOARD_WIDTH; i++) {
       for (int j = 0; j < BOARD_WIDTH - 1; j++) {
-        int c = it[i * BOARD_WIDTH + j];
-        int r = it[i * BOARD_WIDTH + j + 1];
-        int d = it[(i + 1) * BOARD_WIDTH + j];
-        int dg = it[(i + 1) * BOARD_WIDTH + j + 1];
-        int fac;
-
-        if (c == 1) {
-          fac = c == r ? 1 : 0;
-          fac += c == d ? 1 : 0;
-          fac += c == dg ? 1 : 0;
-          consecutive -= fac;
-        } else if (c > 2) {
-          fac = c == r ? 1 : 0;
-          fac += c == d ? 1 : 0;
-          fac += c == dg ? 1 : 0;
-          consecutive += fac * 2;
-          
-          fac = r < 3 ? 1 : 0;
-          fac += d < 3 ? 1 : 0;
-          fac += dg < 3 ? 1 : 0;
-          consecutive -= fac * 3;
-        } else if (c > 3 && c < 24 || (c >= 24 && nearing_final)) {
-          consecutive += 4;
-        }
+        int c = i * BOARD_WIDTH + j;
+        if (it[g_trn[0][c+1]] > it[g_trn[0][c]])
+          l++;
+        if (it[g_trn[1][c+1]] > it[g_trn[1][c]])
+          u++;
+        if (it[g_trn[2][c+1]] > it[g_trn[2][c]])
+          r++;
+        if (it[g_trn[3][c+1]] > it[g_trn[2][c]])
+          d++;
+        
+        if (it[g_trn[0][c+1]] > 2 && it[g_trn[0][c+1]] == it[g_trn[0][c]])
+          l++;
+        if (it[g_trn[1][c+1]] > 2 && it[g_trn[1][c+1]] == it[g_trn[1][c]])
+          u++;
+        if (it[g_trn[2][c+1]] > 2 && it[g_trn[2][c+1]] == it[g_trn[2][c]])
+          r++;
+        if (it[g_trn[3][c+1]] > 2 && it[g_trn[3][c+1]] == it[g_trn[3][c]])
+          d++;
       }
     }
-    return (int)(score*pc) + consecutive;
+    return l+u+r+d;
   }
   
-  private void solve_dfs(int depth, int[] s) {
-    if (depth > 7) {
-      
+  private int utility(int[] s) {
+    int score = 0, max = 0;
+    
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+      for (int j = 0; j < BOARD_WIDTH; j++) {
+        if (it[i*BOARD_WIDTH + j] == 0)
+          score += 30;
+        
+        if (max < it[i*BOARD_WIDTH+j])
+          max = it[i*BOARD_WIDTH+j];
+        
+        //if (j+1< BOARD_WIDTH && it[i*BOARD_WIDTH+j+1] > it[i*BOARD_WIDTH+j])
+        //  score += 16;
+        //if (i+1 < BOARD_WIDTH && it[(i+1)*BOARD_WIDTH+j] > it[i*BOARD_WIDTH+j])
+         // score += 16;
+        
+      }
     }
+    //if (monotonicity() > 27)
+    //System.out.println(monotonicity());
+    score += monotonicity() * 55;
+    return (int)(score);
   }
   
   public void solve_dfs(int[] s) {
@@ -240,6 +249,7 @@ public class Board {
     int best_score, candidate_score = -1;
     Stack<Board> rem = new Stack<Board>();
     int count = 0;
+    long time = System.nanoTime();
     
     best_score = this.utility(s);
     best.add(this);
@@ -261,7 +271,7 @@ public class Board {
       while (!rem.isEmpty()) {
         Board c = rem.pop();
         
-        if (c.depth + 1 < 10) {
+        if (c.depth + 1 < 7) {
           Board[] next = new Board[4];
           Direction[] nextd = {Direction.LEFT, Direction.UP, 
                                Direction.RIGHT, Direction.DOWN};
@@ -296,9 +306,12 @@ public class Board {
       }
     }
     
+    time = System.nanoTime() - time;
+    
     for (Board b : candidate) {
       System.out.println(b);
       System.out.println(b.path.toString());
+      System.out.println(b.path.length() / (time / (1000000000.0)));
       break;
     }
     System.out.println(candidate.size());
