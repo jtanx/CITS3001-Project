@@ -226,6 +226,28 @@ public class Board {
     
   }
   
+  
+  public int fft() {
+    FFT fft = new FFT(BOARD_SPACE);
+    double[] x = new double[BOARD_SPACE],y = new double[BOARD_SPACE];
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      x[i] = it[i];
+    }
+    
+    
+    fft.fft(x,y);
+    int sum = 0;
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      x[i] = Math.sqrt(x[i] * x[i] + y[i] * y[i]);
+      sum += x[i];
+      //System.out.printf("%.3f ", x[i]);
+    }
+    //System.out.println();
+    
+    //System.out.println((int)((x[0] / sum) * 120));
+    return (int)((x[0] / sum) * 120);
+  }
+  
   public int monotonicity() {
     int l = 0, u = 0, r = 0, d = 0;
     
