@@ -195,6 +195,37 @@ public class Board {
     return score;
   }
   
+  /**
+   * Where's my detuning frequency...
+   * @return 
+   */
+  public int dof() {
+    char can_shift = 0;
+    
+    for (char i = 0; i < BOARD_WIDTH && can_shift != 0xF; i++) {
+      for (char j = 1; j < BOARD_WIDTH; j++) {
+        char idx = (char)(i * BOARD_WIDTH + j);
+        char pidx = (char)(idx - 1);
+        
+        if (shift_valid(g_trn[0][idx], g_trn[0][pidx])) {
+          can_shift |= 1;
+        }
+        if (shift_valid(g_trn[1][idx], g_trn[1][pidx])) {
+          can_shift |= 2;
+        }
+        if (shift_valid(g_trn[2][idx], g_trn[2][pidx])) {
+          can_shift |= 4;
+        }
+        if (shift_valid(g_trn[3][idx], g_trn[3][pidx])) {
+          can_shift |= 8;
+        }
+      }
+    }
+    
+    return (can_shift & 1) + ((can_shift & 2) >> 1) + 
+           ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
+  }
+  
   public boolean finished() {
     return finished;
   }
@@ -211,66 +242,81 @@ public class Board {
     return n_z;
   }
   
-  public int mean() {
-    int t = 0;
-    for (int i = 0; i < BOARD_SPACE; i++)
-      t += it[i];
-    return t / BOARD_SPACE;
-  }
-  
-  public int median() {
-    int[] t = Arrays.copyOf(it, BOARD_SPACE);
-    int m = BOARD_SPACE/2;
-    Arrays.sort(t);
-    return (t[m-1] + t[m]) / 2;
-    
-  }
-  
-  
-  public int fft() {
-    FFT fft = new FFT(BOARD_SPACE);
-    double[] x = new double[BOARD_SPACE],y = new double[BOARD_SPACE];
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      x[i] = it[i];
-    }
-    
-    
-    fft.fft(x,y);
+  public int msum() { //Monotonic
     int sum = 0;
     for (int i = 0; i < BOARD_SPACE; i++) {
-      x[i] = Math.sqrt(x[i] * x[i] + y[i] * y[i]);
-      sum += x[i];
-      //System.out.printf("%.3f ", x[i]);
+      sum += it[i] >=3 ? it[i] * 2 : it[i];
     }
-    //System.out.println();
-    
-    //System.out.println((int)((x[0] / sum) * 120));
-    return (int)((x[0] / sum) * 120);
+    return sum;
   }
   
-  public int monotonicity() {
+  //Max theoretical value: 24
+  public int checkerboarding() {
+    int cb = 0;
+    int sl = 0, su = 0;
+    for (char i = 0; i < BOARD_WIDTH; i++) {
+      for (char j = 1; j < BOARD_WIDTH; j++) {
+        int cl = it[g_trn[0][i * BOARD_WIDTH + j]];
+        int pl = it[g_trn[0][i * BOARD_WIDTH + j - 1]];
+        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
+        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
+        
+        if (cl > pl) {
+          if (sl < 0)
+            cb++;
+          sl = 1;
+        } else {
+          if (sl > 0)
+            cb++;
+          sl = -1;
+        }
+        
+        if (cu > pu) {
+          if (su < 0)
+            cb++;
+          su = 1;
+        } else {
+          if (su > 0)
+            cb++;
+          su = -1;
+        }
+      }
+    }
+    
+    return cb;
+  }
+  
+  public int monotonicity() { //Not monotonics
     int l = 0, u = 0, r = 0, d = 0;
     
     for (int i = 0; i < BOARD_WIDTH; i++) {
       for (int j = 0; j < BOARD_WIDTH - 1; j++) {
         int c = i * BOARD_WIDTH + j;
-        if (it[g_trn[0][c+1]] > it[g_trn[0][c]])
-          l++;
-        if (it[g_trn[1][c+1]] > it[g_trn[1][c]])
-          u++;
-        if (it[g_trn[2][c+1]] > it[g_trn[2][c]])
-          r++;
-        if (it[g_trn[3][c+1]] > it[g_trn[2][c]])
-          d++;
         
-        if (it[g_trn[0][c+1]] > 2 && it[g_trn[0][c+1]] == it[g_trn[0][c]])
+        if (it[g_trn[0][c+1]] >= it[g_trn[0][c]]) {
           l++;
-        if (it[g_trn[1][c+1]] > 2 && it[g_trn[1][c+1]] == it[g_trn[1][c]])
+          if (it[g_trn[0][c+1]] / 2 == it[g_trn[0][c]])
+            l++;
+        } else
+          l--;
+        if (it[g_trn[1][c+1]] >= it[g_trn[1][c]]) {
           u++;
-        if (it[g_trn[2][c+1]] > 2 && it[g_trn[2][c+1]] == it[g_trn[2][c]])
+          if (it[g_trn[1][c+1]] / 2 == it[g_trn[1][c]])
+            u++;
+        } else
+          u--;
+        if (it[g_trn[2][c+1]] >= it[g_trn[2][c]]) {
           r++;
-        if (it[g_trn[3][c+1]] > 2 && it[g_trn[3][c+1]] == it[g_trn[3][c]])
+          if (it[g_trn[2][c+1]] / 2 == it[g_trn[2][c]])
+            r++;
+        } else
+          r--;
+        if (it[g_trn[3][c+1]] >= it[g_trn[2][c]]) {
           d++;
+          if (it[g_trn[3][c+1]] / 2 == it[g_trn[3][c]])
+            d++;
+        } else
+          d--;
       }
     }
     return l+u+r+d;

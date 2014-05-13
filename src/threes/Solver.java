@@ -15,9 +15,8 @@ public class Solver {
   
   
   private int evaluate(Board b, int[] s) {
-    float pc = ((float)b.nMoves()) / s.length * 100;
-
-    return (int) (b.score());
+    return (int)(b.score() + b.dof() * 5 + b.zeros() * 6 + 
+            b.monotonicity() * 3 - b.checkerboarding() * 4);
   }
   
   private Board solve_idfs(int[] s, int depthLimit, Board b, int depth) {
