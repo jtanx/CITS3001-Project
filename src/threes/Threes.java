@@ -71,7 +71,7 @@ public class Threes {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
-    int[] bt = new int[Board.BOARD_SPACE], s = null;
+    int[] bt = new int[Board.BOARD_SPACE], s;
     if (args.length != 1){
       System.out.println("Usage: threes file_in.txt");
       return;
@@ -104,9 +104,15 @@ public class Threes {
     System.out.println(b.finished());
     //new Board(bt).solve_dfs(s);
     Solver solver = new Solver();
+    //solver.learn_factors(new Board(bt), s);
+    
+    //if (true) return;
     Board bs = solver.solve_idfs(s, new Board(bt));
     System.out.println(bs);
-    System.out.println(bs.score());
+    //System.out.println(bs.score());
+    System.out.printf("%d, %d, %d, %d, %d\n",
+                      bs.score(), bs.dof(), bs.zeros(),
+                      bs.monotonicity(), bs.checkerboarding());
     System.out.println(bs.moves());
   }
 }

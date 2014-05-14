@@ -207,16 +207,16 @@ public class Board {
         char idx = (char)(i * BOARD_WIDTH + j);
         char pidx = (char)(idx - 1);
         
-        if (shift_valid(g_trn[0][idx], g_trn[0][pidx])) {
+        if (shift_valid(it[g_trn[0][idx]], it[g_trn[0][pidx]])) {
           can_shift |= 1;
         }
-        if (shift_valid(g_trn[1][idx], g_trn[1][pidx])) {
+        if (shift_valid(it[g_trn[1][idx]], it[g_trn[1][pidx]])) {
           can_shift |= 2;
         }
-        if (shift_valid(g_trn[2][idx], g_trn[2][pidx])) {
+        if (shift_valid(it[g_trn[2][idx]], it[g_trn[2][pidx]])) {
           can_shift |= 4;
         }
-        if (shift_valid(g_trn[3][idx], g_trn[3][pidx])) {
+        if (shift_valid(it[g_trn[3][idx]], it[g_trn[3][pidx]])) {
           can_shift |= 8;
         }
       }
@@ -238,6 +238,14 @@ public class Board {
     int n_z = 0;
     for (int i = 0; i < BOARD_SPACE; i++)
       if (it[i] == 0)
+        n_z++;
+    return n_z;
+  }
+  
+  public int gthree() {
+    int n_z = 0;
+    for (int i = 0; i < BOARD_SPACE; i++)
+      if (it[i] > 2)
         n_z++;
     return n_z;
   }
