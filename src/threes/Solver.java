@@ -14,8 +14,8 @@ public class Solver {
   private int fbest_score = -1;
   
   //private int[] factors = {0,1,3,1};
-  private int[] factors = {5,0,0,0};
-  //private int[] factors = {12,1,2};
+  //private int[] factors = {5,0,0,0};
+  private int[] factors = {12,1,2,2};
   /*
    * 62448, 0, 0, 11, 15
 RDDDRDLRDDLRDLRLRRRDDDRRURDRDLRDLUDUDDRDLDDDDLRDLUDRDDRRLRDURDRRRURDLDRDUDDRRLRUDLLDRDLDLUULUDRDLULDLRDRUDRLRDRDLDRDDRRRUDRDDRRRDDURDLRDLDRRLDRDDRRURDRRLUDRDRURDRURUDRDDLUDURURUUDUDDRRULDRLRDDLDRUURRRRDLRUURDRUDRDURRDULRDLDRDDRURRDRUDRURUDRLLLRDDRRLLRDURRDLLLDRRDDDLDRUDRDLRLRDLDLUDDDRDDRRDLRRURDLRUDLDRRULRLRDDRUDLULRDDRRDDLDRDLRDULRDRLULRUDDRRRUUDRRRRRLRULDRLRRRDDDRRDLURRDRRRDDLDDRDLDLLRDDLRRLDRDDDDDLUDDDLUDLLDRDRURUDDRRRLRDDRDDUDRUDLLDRULDDLDRRUUDRDRRLRRRUDRRLRDRDRRRRLRURURDURULUURDDDULDRUDDRULRDRDUULRDURDRURRDUDRLURRRDDRURUURDURUURURDRDURDULLUDRURURURUUUURDDRRDDUULURDRUURUDRDLLUDRDRRLRRLRDLDLDRLRRDRLDURDRDRLRLRLDDDLLLURDRRDRUDRLRDUULDRRDDUUURRDDDURDRLDDRUDLRDDRRDDRDLRDDRRLRDUDRLLDRUDDRRLLLRUUUDUU
@@ -81,7 +81,7 @@ Used 707/20000 available moves.
       Board next = new Board(b);
       if (next.move(s, directions[i])) {
         Board candidate = solve_idfs(s, depthLimit, next, depth + 1);
-
+        
         if (candidate != null) {
           if (candidate.finished()) {
             int score = candidate.score();
@@ -94,6 +94,9 @@ Used 707/20000 available moves.
             if (score > best_score ) {
               best_score = score;
               best = candidate;
+            } else {
+              
+              //Do some shit with this other option
             }
           }
         }
@@ -106,6 +109,76 @@ Used 707/20000 available moves.
       best = b;
     }
     return best;
+  }
+  
+  private Board[] solve_idfs(int[] s, int depthLimit, int depth, Board... b) {
+    Direction[] directions = {Direction.LEFT, Direction.UP, 
+                              Direction.RIGHT, Direction.DOWN};
+    if (depth >= depthLimit) { //Cutoff test
+      return b;
+    }
+    
+    Board[] best = new Board[b.length];
+    int[] best_score = new int[b.length];
+    int considered = 0;
+    
+    for (int i = 0; i < b.length; i++)
+      best_score[i] = -1;
+    
+    for (int bc = 0; bc < b.length; bc++) {
+      if (b[bc] == null)
+        continue;
+      
+      for (int i = 0; i < BOARD_WIDTH; i++) {
+        Board next = new Board(b[bc]);
+        if (next.move(s, directions[i])) {
+          Board[] nn = {next, null};
+          Board[] candidates = solve_idfs(s, depthLimit, depth + 1, nn);
+          
+          for (Board candidate : candidates) {
+            if (candidate != null) {
+              if (candidate.finished()) {
+                int score = candidate.score();
+                if (score > fbest_score) {
+                  fbest_score = score;
+                  fbest = candidate;
+                }
+              } else {
+                int score = evaluate(candidate, s);
+                for (int ci = 0; ci < b.length; ci++) {
+                  if (score > best_score[ci]) {
+                    best_score[ci] = score;
+                    best[ci] = candidate;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          considered++;
+        }
+      }
+
+      if (considered == 0) { //Terminal state: Cannot move in any direction
+        b[bc].finished(true);
+        int score = b[bc].score();
+        if (score > fbest_score) {
+          fbest_score = score;
+          fbest = b[bc];
+        }
+      }
+    }
+    
+    return best;
+  }
+  
+  public Board solve_idfs2(int[] s, Board b) {
+    Board[] r = {b, null};
+    while ((r = solve_idfs(s, MAX_DEPTH, 0, r))[0] != null) {
+      System.out.println(r[0]);
+      System.out.println(r[0].score());
+    }
+    return fbest;
   }
   
   public Board solve_idfs(int[] s, Board b) {

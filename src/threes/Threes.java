@@ -107,7 +107,7 @@ public class Threes {
     //solver.learn_factors(new Board(bt), s);
     
     //if (true) return;
-    Board bs = solver.solve_idfs(s, new Board(bt));
+    Board bs = solver.solve_idfs2(s, new Board(bt));
     System.out.println(bs);
     //System.out.println(bs.score());
     System.out.printf("%d, %d, %d, %d, %d\n",
