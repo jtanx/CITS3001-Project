@@ -1,6 +1,5 @@
 package threes;
 
-import java.util.Arrays;
 import threes.Board.Direction;
 
 /**
@@ -8,14 +7,13 @@ import threes.Board.Direction;
  * @author
  */
 public class Solver {
-  private static final int MAX_DEPTH = 8;
+  private static final int MAX_DEPTH = 9;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private Board fbest = null;
   private int fbest_score = -1;
   
-  //private int[] factors = {0,1,3,1};
-  //private int[] factors = {5,0,0,0};
-  private int[] factors = {12,1,2,2};
+  private double[] factors = {3,4,1,9};
+  //private int[] factors = {12,1,2,2};
   /*
    * 62448, 0, 0, 11, 15
 RDDDRDLRDDLRDLRLRRRDDDRRURDRDLRDLUDUDDRDLDDDDLRDLUDRDDRRLRDURDRRRURDLDRDUDDRRLRUDLLDRDLDLUULUDRDLULDLRDRUDRLRDRDLDRDDRRRUDRDDRRRDDURDLRDLDRRLDRDDRRURDRRLUDRDRURDRURUDRDDLUDURURUUDUDDRRULDRLRDDLDRUURRRRDLRUURDRUDRDURRDULRDLDRDDRURRDRUDRURUDRLLLRDDRRLLRDURRDLLLDRRDDDLDRUDRDLRLRDLDLUDDDRDDRRDLRRURDLRUDLDRRULRLRDDRUDLULRDDRRDDLDRDLRDULRDRLULRUDDRRRUUDRRRRRLRULDRLRRRDDDRRDLURRDRRRDDLDDRDLDLLRDDLRRLDRDDDDDLUDDDLUDLLDRDRURUDDRRRLRDDRDDUDRUDLLDRULDDLDRRUUDRDRRLRRRUDRRLRDRDRRRRLRURURDURULUURDDDULDRUDDRULRDRDUULRDURDRURRDUDRLURRRDDRURUURDURUURURDRDURDULLUDRURURURUUUURDDRRDDUULURDRUURUDRDLLUDRDRRLRRLRDLDLDRLRRDRLDURDRDRLRLRLDDDLLLURDRRDRUDRLRDUULDRRDDUUURRDDDURDRLDDRUDLRDDRRDDRDLRDDRRLRDUDRLLDRUDDRRLLLRUUUDUU
@@ -66,7 +64,7 @@ Used 707/20000 available moves.
   }
   
   
-  private Board solve_idfs(int[] s, int depthLimit, Board b, int depth) {
+  private Board solve_dfs(int[] s, int depthLimit, Board b, int depth) {
     Direction[] directions = {Direction.LEFT, Direction.UP, 
                               Direction.RIGHT, Direction.DOWN};
     if (depth >= depthLimit) { //Cutoff test
@@ -75,12 +73,11 @@ Used 707/20000 available moves.
     
     Board best = null;
     int best_score = -1;
-    int considered = 0;
-    
+
     for (int i = 0; i < BOARD_WIDTH; i++) {
       Board next = new Board(b);
       if (next.move(s, directions[i])) {
-        Board candidate = solve_idfs(s, depthLimit, next, depth + 1);
+        Board candidate = solve_dfs(s, depthLimit, next, depth + 1);
         
         if (candidate != null) {
           if (candidate.finished()) {
@@ -94,19 +91,10 @@ Used 707/20000 available moves.
             if (score > best_score ) {
               best_score = score;
               best = candidate;
-            } else {
-              
-              //Do some shit with this other option
             }
           }
         }
-        considered++;
       }
-    }
-    
-    if (considered == 0) { //Terminal state: Cannot move in any direction
-      b.finished(true);
-      best = b;
     }
     return best;
   }
@@ -183,7 +171,7 @@ Used 707/20000 available moves.
   
   public Board solve_idfs(int[] s, Board b) {
     while (b != null && !b.finished()) {
-      b = solve_idfs(s, MAX_DEPTH, b, 0);
+      b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
         System.out.println(b);
         System.out.println(b.score());

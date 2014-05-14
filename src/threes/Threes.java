@@ -84,6 +84,7 @@ public class Threes {
       return;
     }
     
+    /*
     Board b = new Board(bt);
     //Direction[] moves = Direction.parse("UUURDUDDLLLRRLRRURLDRRRRRDDLUUURUDRURRDRLRRLLLRDRRLURRDRDURDRRRDRULLULLRULLDRUDRLRDLRRDDDDDULURDRRDDDURDDUDRRURDRDDURDLRDDDDDRUDUUDDDURRURDDULDRULULDLDRRLUURDDDDLDDUDDRDLRDLRDDLDUUDLLRLDDRDRRDURRLDRURLUUUDLDDDDRRDDDRUDLURLDRLLDDLDDLDDRDLLLDDUULLDRRRLURRDRDUDRRURDDLLLRDDRRLLLRRRRDDULURURDUUDLLDDRRLDUURRDULRRDRRDLLURRRUULRDLRDRRULRULURDRRDRDRDRRRLDDRDDRDRUDLDRDLRURRDDLURDLDRDULLDDRDRDLRULRDDDURURLDDLRDDRURRLDLRRDDLLDDURULURDDULUURLRRURDDRRLUDLDDLLDLLLDRDLURUURDDDLURURURDLDRUDRDDDRURUDDDLDUDDRDRDLULDRDLRULLRDUDLRDDLDDRRULULURULURLUURRDLUUDLRLRUUUDRRULUDRRURDDRRRURRRDUDULURURRDULLDURUDRLDDDUURUDDDRRRURRDDLULDRDRRLUDDLDRDLLUUURDRRDDLLDRDDRULDRDRRDDLDLDRULRUUDLDLDURDRDRRDLURURRUULDRULUUDLDUULDURRULLDLDRDDRLDDDRRDRDDDLUDRRDLDDLLLLDLDRRLDDDRDLDLULLDRDULDLDRRDRRLDLDDLDRLLURDULRURURDRUUDLULDDRUURRDRLRULDRRDLRRURURDDLDDURUUUUUDLRRUU");
     Direction[] moves = new Direction[0];
@@ -102,17 +103,17 @@ public class Threes {
     }
     System.out.println(b.score());
     System.out.println(b.finished());
-    //new Board(bt).solve_dfs(s);
+    */
+    
     Solver solver = new Solver();
     //solver.learn_factors(new Board(bt), s);
-    
     //if (true) return;
-    Board bs = solver.solve_idfs2(s, new Board(bt));
+    Board bs = solver.solve_idfs(s, new Board(bt));
     System.out.println(bs);
-    //System.out.println(bs.score());
     System.out.printf("%d, %d, %d, %d, %d\n",
-                      bs.score(), bs.dof(), bs.zeros(),
-                      bs.monotonicity(), bs.checkerboarding());
+                      bs.score(), bs.dof(), 
+                      bs.zeros(), bs.checkerboarding(),
+                      bs.smoothness());
     System.out.println(bs.moves());
     System.out.printf("Used %d/%d available moves.\n", 
             bs.moves().length(), s.length);
