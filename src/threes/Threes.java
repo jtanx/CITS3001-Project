@@ -114,5 +114,7 @@ public class Threes {
                       bs.score(), bs.dof(), bs.zeros(),
                       bs.monotonicity(), bs.checkerboarding());
     System.out.println(bs.moves());
+    System.out.printf("Used %d/%d available moves.\n", 
+            bs.moves().length(), s.length);
   }
 }

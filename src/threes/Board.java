@@ -330,6 +330,30 @@ public class Board {
     return l+u+r+d;
   }
   
+  private int elevation(int v) {
+    return (int)((v/3) <= 0 ? 0 : Math.log(v/3) / Math.log(2));
+  }
+  
+  public int smoothness() {
+    int smoothness = 0;
+    for (int i = 0; i < BOARD_WIDTH - 1; i++) {
+      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
+        int c = it[i * BOARD_WIDTH + j];
+        if (c > 0) {
+          int r = it[i * BOARD_WIDTH + j + 1];
+          int d = it[(i + 1) * BOARD_WIDTH + j];
+          
+          smoothness -= Math.abs(elevation(c) - elevation(r));
+          smoothness -= Math.abs(elevation(c) - elevation(d));
+        }
+      }
+    }
+    
+    //System.out.println(smoothness);
+    
+    return smoothness;
+  }
+  
   private int utility(int[] s) {
     int score = 0, max = 0;
     

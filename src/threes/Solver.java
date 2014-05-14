@@ -19,7 +19,8 @@ public class Solver {
   private int evaluate(Board b, int[] s) {
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
            factors[1] * b.checkerboarding() + 
-           factors[2] * b.gthree());
+           factors[2] * b.gthree() + 
+            2 * b.smoothness());
   }
   
   public void learn_factors(Board b, int[] s) {
