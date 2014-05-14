@@ -165,7 +165,7 @@ public class Board {
       
       it[seq_trn[j]] = s[c_sequence++];      
       path.append(d);
-      if (c_sequence >= s.length) {
+      if (c_sequence >= s.length || dof() == 0) {
         finished = true;
       }
     }
@@ -250,12 +250,34 @@ public class Board {
     return n_z;
   }
   
-  public int msum() { //Monotonic
-    int sum = 0;
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      sum += it[i] >=3 ? it[i] * 2 : it[i];
+  private int sign(int v) {
+    return v < 0 ? -1 : v > 0 ? 1 : 0;
+  }
+  
+  public int checkerboarding2() {
+    int sgnl = sign(it[0] - it[1]), sgnd = sign(it[0] - it[BOARD_WIDTH]);
+    int nSwitches = 0;
+    
+    for (char i = 0; i < BOARD_WIDTH; i++) {
+      for (char j = 0; j < BOARD_WIDTH - 1; j++){
+        int csgnl = sign(it[g_trn[0][i * BOARD_WIDTH + j]] - 
+                    it[g_trn[0][i * BOARD_WIDTH + j + 1]]);
+        int csgnd = sign(it[g_trn[1][i * BOARD_WIDTH + j]] - 
+                    it[g_trn[1][i * BOARD_WIDTH + j + 1]]);
+        
+        if (csgnl != sgnl) {
+          sgnl = csgnl;
+          nSwitches++;
+        }
+        
+        if (csgnd != sgnd) {
+          sgnd = csgnd;
+          nSwitches++;
+        }
+      }
     }
-    return sum;
+    
+    return -nSwitches;
   }
   
   //Max theoretical value: 24
@@ -291,43 +313,7 @@ public class Board {
       }
     }
     
-    return cb;
-  }
-  
-  public int monotonicity() { //Not monotonics
-    int l = 0, u = 0, r = 0, d = 0;
-    
-    for (int i = 0; i < BOARD_WIDTH; i++) {
-      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
-        int c = i * BOARD_WIDTH + j;
-        
-        if (it[g_trn[0][c+1]] >= it[g_trn[0][c]]) {
-          l++;
-          if (it[g_trn[0][c+1]] / 2 == it[g_trn[0][c]])
-            l++;
-        } else
-          l--;
-        if (it[g_trn[1][c+1]] >= it[g_trn[1][c]]) {
-          u++;
-          if (it[g_trn[1][c+1]] / 2 == it[g_trn[1][c]])
-            u++;
-        } else
-          u--;
-        if (it[g_trn[2][c+1]] >= it[g_trn[2][c]]) {
-          r++;
-          if (it[g_trn[2][c+1]] / 2 == it[g_trn[2][c]])
-            r++;
-        } else
-          r--;
-        if (it[g_trn[3][c+1]] >= it[g_trn[2][c]]) {
-          d++;
-          if (it[g_trn[3][c+1]] / 2 == it[g_trn[3][c]])
-            d++;
-        } else
-          d--;
-      }
-    }
-    return l+u+r+d;
+    return -cb;
   }
   
   private int elevation(int v) {
@@ -354,29 +340,6 @@ public class Board {
     return smoothness;
   }
   
-  private int utility(int[] s) {
-    int score = 0, max = 0;
-    
-    for (int i = 0; i < BOARD_WIDTH; i++) {
-      for (int j = 0; j < BOARD_WIDTH; j++) {
-        if (it[i*BOARD_WIDTH + j] == 0)
-          score += 30;
-        
-        if (max < it[i*BOARD_WIDTH+j])
-          max = it[i*BOARD_WIDTH+j];
-        
-        //if (j+1< BOARD_WIDTH && it[i*BOARD_WIDTH+j+1] > it[i*BOARD_WIDTH+j])
-        //  score += 16;
-        //if (i+1 < BOARD_WIDTH && it[(i+1)*BOARD_WIDTH+j] > it[i*BOARD_WIDTH+j])
-         // score += 16;
-        
-      }
-    }
-    //if (monotonicity() > 27)
-    //System.out.println(monotonicity());
-    score += monotonicity() * 55;
-    return (int)(score);
-  }
   
   public void solve_dfs(int[] s) {
     Set<Board> candidate = new HashSet<Board>();
@@ -386,7 +349,7 @@ public class Board {
     int count = 0;
     long time = System.nanoTime();
     
-    best_score = this.utility(s);
+    best_score = this.score();
     best.add(this);
     while (!best.isEmpty()) { //Got candidate paths left to follow
       if (count++ % 10 == 0) {
@@ -429,7 +392,7 @@ public class Board {
             }
           }
         } else {
-          int score = c.utility(s);
+          int score = c.score();
           if (score > best_score) {
             best.clear();
             best_score = score;
