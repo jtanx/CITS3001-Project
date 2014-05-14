@@ -29,12 +29,12 @@ Used 707/20000 available moves.
   }
   
   public void learn_factors(Board b, int[] s) {
-      int[] best = new int[3];
+      int[] best = new int[factors.length];
       int best_score = -1;
       Board best_board = null;
       float pc = 0;
       for (int i = 3; i < 15; i++) {
-          for (int j = 1; j < 15; j++) {
+          for (int j = 0; j < 15; j++) {
               for (int k = 0; k < 15; k++) {
                 for (int l = 0; l < 15; l++) {
                     factors[0] = i; factors[1] = j;
@@ -49,8 +49,16 @@ Used 707/20000 available moves.
                     }
                 }
                 pc += 15.0/(15*15*15);
+                System.out.printf("%.2f%%\n", pc * 100);
+                if (best_board != null) {
+                    System.out.println(best_board);
+                    System.out.println(best_board.score());
+                }
+                for (int v : best) {
+                    System.out.printf("%d ", v);
+                }
+                System.out.println();
               }
-              System.out.printf("%.2f%%\n", pc*100);
           }
           if (best_board != null) {
               System.out.println(best_board);
@@ -112,8 +120,8 @@ Used 707/20000 available moves.
     while (b != null && !b.finished()) {
       b = solve_idfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        System.out.println(b);
-        System.out.println(b.score());
+        //System.out.println(b);
+        //System.out.println(b.score());
       }
     }
     return fbest;
