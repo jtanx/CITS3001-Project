@@ -7,21 +7,20 @@ import threes.Board.Direction;
  * @author
  */
 public class Solver {
-  private static final int MAX_DEPTH = 9;
+  private static final int MAX_DEPTH = 8;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private Board fbest = null;
   private int fbest_score = -1;
   
-  private double[] factors = {3,4,1,9};
+  //private int[] factors = {14,4,10,7};
+  private int[] factors = {18, 0, 6, 10};
   //private int[] factors = {12,1,2,2};
   /*
-   * 62448, 0, 0, 11, 15
-RDDDRDLRDDLRDLRLRRRDDDRRURDRDLRDLUDUDDRDLDDDDLRDLUDRDDRRLRDURDRRRURDLDRDUDDRRLRUDLLDRDLDLUULUDRDLULDLRDRUDRLRDRDLDRDDRRRUDRDDRRRDDURDLRDLDRRLDRDDRRURDRRLUDRDRURDRURUDRDDLUDURURUUDUDDRRULDRLRDDLDRUURRRRDLRUURDRUDRDURRDULRDLDRDDRURRDRUDRURUDRLLLRDDRRLLRDURRDLLLDRRDDDLDRUDRDLRLRDLDLUDDDRDDRRDLRRURDLRUDLDRRULRLRDDRUDLULRDDRRDDLDRDLRDULRDRLULRUDDRRRUUDRRRRRLRULDRLRRRDDDRRDLURRDRRRDDLDDRDLDLLRDDLRRLDRDDDDDLUDDDLUDLLDRDRURUDDRRRLRDDRDDUDRUDLLDRULDDLDRRUUDRDRRLRRRUDRRLRDRDRRRRLRURURDURULUURDDDULDRUDDRULRDRDUULRDURDRURRDUDRLURRRDDRURUURDURUURURDRDURDULLUDRURURURUUUURDDRRDDUULURDRUURUDRDLLUDRDRRLRRLRDLDLDRLRRDRLDURDRDRLRLRLDDDLLLURDRRDRUDRLRDUULDRRDDUUURRDDDURDRLDDRUDLRDDRRDDRDLRDDRRLRDUDRLLDRUDDRRLLLRUUUDUU
-Used 707/20000 available moves.
+   * Best so far is ~80k with 14,4,10,7
    */
   private int evaluate(Board b, int[] s) {
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
-           factors[1] * b.checkerboarding() + 
+           factors[1] * b.checkerboarding2() + 
            factors[2] * b.gthree() + 
             factors[3] * b.smoothness());
   }
@@ -31,10 +30,10 @@ Used 707/20000 available moves.
       int best_score = -1;
       Board best_board = null;
       float pc = 0;
-      for (int i = 3; i < 15; i++) {
-          for (int j = 0; j < 15; j++) {
-              for (int k = 0; k < 15; k++) {
-                for (int l = 0; l < 15; l++) {
+      for (int i = 18; i < 19; i++) {
+          for (int j = 1; j < 19; j++) {
+              for (int k = 6; k < 19; k++) {
+                for (int l = 10; l < 19; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
 
@@ -58,10 +57,8 @@ Used 707/20000 available moves.
                 System.out.println();
               }
           }
-          if (best_board != null) {
-              System.out.println(best_board);
-              System.out.println(best_board.score());
-          }
+          
+          System.out.println("Currently at: (not best)");
           for (int v : best)
             System.out.printf("%d ", v);
           System.out.println();
