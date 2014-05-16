@@ -18,7 +18,7 @@ public class Solver {
   //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
   //Zeros, smoothness, gthree, lowuncombo,
   //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
-  private int[] factors = {18, 10, 10, 12};
+  private int[] factors = {18, 11, 5, 2}; //Maxes out lb2, pretty good for b1, pretty crap for exampleinput, 190k for lb1
   
   
 
@@ -31,7 +31,7 @@ public class Solver {
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
            factors[1] * b.gthree() + 
             factors[2] * b.smoothness() + 
-            factors[3] * b.checkerboarding2());
+            factors[3] * b.checkerboarding3());
   }
   
   public void learn_factors(Board b, int[] s) {
@@ -40,8 +40,8 @@ public class Solver {
       Board best_board = null;
       float pc = 0;
       for (int i = 18; i < 19; i++) {
-          for (int j = 10; j < 19; j++) {
-              for (int k = 7; k < 14; k++) {
+          for (int j = 12; j < 19; j++) {
+              for (int k = 2; k < 14; k++) {
                 for (int l = 0; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
@@ -82,6 +82,7 @@ public class Solver {
   private Board solve_dfs(int[] s, int depthLimit, Board b, int depth) {
     Direction[] directions = {Direction.LEFT, Direction.UP, 
                               Direction.RIGHT, Direction.DOWN};
+    
     if (depth >= depthLimit) { //Cutoff test
       return b;
     }
@@ -120,8 +121,8 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        System.out.println(b);
-        System.out.println(b.score());
+        //System.out.println(b);
+        //System.out.println(b.score());
       }
     }
     return fbest;

@@ -3,10 +3,7 @@ package threes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  *
@@ -53,7 +50,8 @@ public class Board {
     }
   };
   
-  private int[] it;
+  private int[] it, pscores;
+  private int psindex;
   private int c_sequence;
   private boolean finished;
   private int depth;
@@ -63,12 +61,15 @@ public class Board {
     if (board.length != BOARD_SPACE) {
       throw new IllegalArgumentException("Invalid input board size");
     }
-    it = Arrays.copyOf(board, BOARD_SPACE);
+    it = Arrays.copyOf(board, board.length);
+    pscores = new int[3];
     path = new StringBuilder();
   }
   
   public Board(Board o) {
-    this.it = Arrays.copyOf(o.it, BOARD_SPACE);
+    this.it = Arrays.copyOf(o.it, o.it.length);
+    this.pscores = Arrays.copyOf(o.pscores, o.pscores.length);
+    this.psindex = o.psindex;
     this.c_sequence = o.c_sequence;
     this.finished = o.finished;
     this.depth = o.depth;
@@ -112,6 +113,22 @@ public class Board {
   
   public String moves() {
     return path.toString();
+  }
+  
+  //Percent variation in the last pscores.length move scores
+  public int variation() {
+    int diff = 0, total = pscores[psindex];
+    if (c_sequence >= pscores.length) {
+      for (int i = 1; i < pscores.length; i++) {
+        int p = (psindex + i - 1) % pscores.length;
+        int c = (psindex + i) % pscores.length;
+        diff += pscores[c] - pscores[p];
+        total += pscores[c];
+      }
+    
+      return (100 * diff) / total;
+    }
+    return 0;
   }
   
   public boolean move(int[] s, Direction d) {
@@ -169,6 +186,9 @@ public class Board {
       if (c_sequence >= s.length || dof() == 0) {
         finished = true;
       }
+      
+      pscores[psindex] = score();
+      psindex = (psindex + 1) % pscores.length;
     }
     return true;
   }
@@ -254,6 +274,28 @@ public class Board {
     }
     return (can_shift & 1) + ((can_shift & 2) >> 1) + 
            ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
+  }
+  
+  public int nCombinable() {
+    int nCombinable = 0;
+    for (char i = 0; i < BOARD_WIDTH; i++) {
+      for (char j = 1; j < BOARD_WIDTH; j++) {
+        int cl = it[i * BOARD_WIDTH + j];
+        int pl = it[i * BOARD_WIDTH + j - 1];
+        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
+        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
+        
+        if (cl == 0 || shift_valid(cl, pl))
+          nCombinable++;
+        if (shift_valid(pl, cl))
+          nCombinable++;
+        if (cu == 0 || shift_valid(cu, pu))
+          nCombinable++;
+        if (shift_valid(pu, cu))
+          nCombinable++;
+      }
+    }
+    return nCombinable;
   }
   
   public boolean finished() {
