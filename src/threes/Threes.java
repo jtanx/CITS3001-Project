@@ -83,6 +83,24 @@ public class Threes {
       return;
     }
     
+    //checkerboarding.test();
+    //if(true) return;
+    /*
+    Board b = new Board(bt);
+    Scanner scan = new Scanner(System.in);
+    String d;
+    
+    System.out.println(b);
+    System.out.print("Enter move: ");
+    while (!(d = scan.next()).equals("q")) {
+      b.move(s, d);
+      System.out.println(b);
+      System.out.println(b.checkerboarding2());
+      System.out.print("Enter move: ");
+    }
+    
+    if (true) return;*/
+    
     /*
     Board b = new Board(bt);
     //Direction[] moves = Direction.parse("UUURDUDDLLLRRLRRURLDRRRRRDDLUUURUDRURRDRLRRLLLRDRRLURRDRDURDRRRDRULLULLRULLDRUDRLRDLRRDDDDDULURDRRDDDURDDUDRRURDRDDURDLRDDDDDRUDUUDDDURRURDDULDRULULDLDRRLUURDDDDLDDUDDRDLRDLRDDLDUUDLLRLDDRDRRDURRLDRURLUUUDLDDDDRRDDDRUDLURLDRLLDDLDDLDDRDLLLDDUULLDRRRLURRDRDUDRRURDDLLLRDDRRLLLRRRRDDULURURDUUDLLDDRRLDUURRDULRRDRRDLLURRRUULRDLRDRRULRULURDRRDRDRDRRRLDDRDDRDRUDLDRDLRURRDDLURDLDRDULLDDRDRDLRULRDDDURURLDDLRDDRURRLDLRRDDLLDDURULURDDULUURLRRURDDRRLUDLDDLLDLLLDRDLURUURDDDLURURURDLDRUDRDDDRURUDDDLDUDDRDRDLULDRDLRULLRDUDLRDDLDDRRULULURULURLUURRDLUUDLRLRUUUDRRULUDRRURDDRRRURRRDUDULURURRDULLDURUDRLDDDUURUDDDRRRURRDDLULDRDRRLUDDLDRDLLUUURDRRDDLLDRDDRULDRDRRDDLDLDRULRUUDLDLDURDRDRRDLURURRUULDRULUUDLDUULDURRULLDLDRDDRLDDDRRDRDDDLUDRRDLDDLLLLDLDRRLDDDRDLDLULLDRDULDLDRRDRRLDLDDLDRLLURDULRURURDRUUDLULDDRUURRDRLRULDRRDLRRURURDDLDDURUUUUUDLRRUU");
@@ -107,14 +125,18 @@ public class Threes {
     Solver solver = new Solver();
     //solver.learn_factors(new Board(bt), s);
     //if (true) return;
+    long tim = System.nanoTime();
     Board bs = solver.solve_idfs(s, new Board(bt));
+    tim = System.nanoTime() - tim;
     System.out.println(bs);
     System.out.printf("%d, %d, %d, %d, %d\n",
                       bs.score(), bs.dof(), 
-                      bs.zeros(), bs.checkerboarding(),
+                      bs.zeros(), bs.checkerboarding2(),
                       bs.smoothness());
+    System.out.printf("Used %d/%d available moves in %.2f seconds. (%.2f m/s)\n", 
+                      bs.moves().length(), s.length, 
+                      tim / 1000000000.0,
+                      bs.moves().length() / (tim / 1000000000.0));
     System.out.println(bs.moves());
-    System.out.printf("Used %d/%d available moves.\n", 
-            bs.moves().length(), s.length);
   }
 }

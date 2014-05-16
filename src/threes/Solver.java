@@ -12,17 +12,18 @@ public class Solver {
   private Board fbest = null;
   private int fbest_score = -1;
   
-  //private int[] factors = {14,4,10,7};
-  private int[] factors = {18, 0, 6, 10};
-  //private int[] factors = {12,1,2,2};
-  /*
-   * Best so far is ~80k with 14,4,10,7
-   */
+  //Zeros, checkerboarding2/3, gthree, smoothness
+  //private int[] factors = {18, 0, 6, 10}; //Gets 187004
+  //private int[] factors = {18, 1, 11, 9}; //Gets  186920, 593529 for lb2
+  //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
+  //Zeros, smoothness, gthree, lowuncombo,
+  private int[] factors = {18, 9, 9, 6}; //Gets 187004
+
   private int evaluate(Board b, int[] s) {
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
-           factors[1] * b.checkerboarding2() + 
+           factors[1] * b.smoothness() + 
            factors[2] * b.gthree() + 
-            factors[3] * b.smoothness());
+            factors[3] * b.lowUncombo() );
   }
   
   public void learn_factors(Board b, int[] s) {
@@ -32,8 +33,8 @@ public class Solver {
       float pc = 0;
       for (int i = 18; i < 19; i++) {
           for (int j = 1; j < 19; j++) {
-              for (int k = 6; k < 19; k++) {
-                for (int l = 10; l < 19; l++) {
+              for (int k = 0; k < 14; k++) {
+                for (int l = 0; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
 
@@ -56,12 +57,13 @@ public class Solver {
                 }
                 System.out.println();
               }
+              
+            System.out.println("Currently at: (not best)");
+            for (int v : best) {
+              System.out.printf("%d ", v);
+            }
+            System.out.println();
           }
-          
-          System.out.println("Currently at: (not best)");
-          for (int v : best)
-            System.out.printf("%d ", v);
-          System.out.println();
       }
     for (int v : best)
       System.out.printf("%d ", v);
@@ -178,8 +180,8 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        //System.out.println(b);
-        //System.out.println(b.score());
+        System.out.println(b);
+        System.out.println(b.score());
       }
     }
     return fbest;

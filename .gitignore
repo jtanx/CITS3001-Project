@@ -36,3 +36,4 @@ threes/Release/
 #Netbeans cruft
 build/
 nbproject/private/
+/dist/

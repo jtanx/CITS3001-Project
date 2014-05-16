@@ -172,6 +172,16 @@ public class Board {
     return true;
   }
   
+  public boolean move(int[] s, String moveSequence) {
+    Direction[] moves = Direction.parse(moveSequence);
+    boolean ret = false;
+    
+    for (Direction move : moves) {
+      ret = this.move(s, move);
+    }
+    return ret;
+  }
+  
   public int tile_score(int t) {
     if (t == 1 || t == 2) {
       return 1;
@@ -221,7 +231,7 @@ public class Board {
         }
       }
     }
-    
+      
     return (can_shift & 1) + ((can_shift & 2) >> 1) + 
            ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
   }
@@ -255,65 +265,68 @@ public class Board {
   }
   
   public int checkerboarding2() {
-    int sgnl = sign(it[0] - it[1]), sgnd = sign(it[0] - it[BOARD_WIDTH]);
     int nSwitches = 0;
     
     for (char i = 0; i < BOARD_WIDTH; i++) {
+      int il = 0, id = 0;
+      int sgnl = sign(it[g_trn[0][i * BOARD_WIDTH + 1]] - 
+                    it[g_trn[0][i * BOARD_WIDTH]]);
+      int sgnd = sign(it[g_trn[1][i * BOARD_WIDTH + 1]] - 
+                    it[g_trn[1][i * BOARD_WIDTH]]);
+      
       for (char j = 0; j < BOARD_WIDTH - 1; j++){
-        int csgnl = sign(it[g_trn[0][i * BOARD_WIDTH + j]] - 
-                    it[g_trn[0][i * BOARD_WIDTH + j + 1]]);
-        int csgnd = sign(it[g_trn[1][i * BOARD_WIDTH + j]] - 
-                    it[g_trn[1][i * BOARD_WIDTH + j + 1]]);
+        int csgnl = sign(it[g_trn[0][i * BOARD_WIDTH + j + 1]] - 
+                    it[g_trn[0][i * BOARD_WIDTH + j]]);
+        int csgnd = sign(it[g_trn[1][i * BOARD_WIDTH + j + 1]] - 
+                    it[g_trn[1][i * BOARD_WIDTH + j]]);
         
-        if (csgnl != sgnl) {
+        if (csgnl != 0 && csgnl != sgnl) {
+          il += sgnl == 0 ? 0 : 2;
           sgnl = csgnl;
-          nSwitches++;
         }
-        
-        if (csgnd != sgnd) {
+        if (csgnd != 0 && csgnd != sgnd) {
+          id += sgnd == 0 ? 0 : 2;
           sgnd = csgnd;
-          nSwitches++;
         }
       }
+      
+      nSwitches += il + id;
     }
     
     return -nSwitches;
   }
   
-  //Max theoretical value: 24
-  public int checkerboarding() {
-    int cb = 0;
-    int sl = 0, su = 0;
+  public int checkerboarding3() {
+    int checkerboarding = 0;
+    
     for (char i = 0; i < BOARD_WIDTH; i++) {
-      for (char j = 1; j < BOARD_WIDTH; j++) {
-        int cl = it[g_trn[0][i * BOARD_WIDTH + j]];
-        int pl = it[g_trn[0][i * BOARD_WIDTH + j - 1]];
-        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
-        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
+      int sgnl = elevation(it[g_trn[0][i * BOARD_WIDTH + 1]]) - 
+                 elevation(it[g_trn[0][i * BOARD_WIDTH]]);
+      int sgnd = elevation(it[g_trn[1][i * BOARD_WIDTH + 1]]) - 
+                 elevation(it[g_trn[1][i * BOARD_WIDTH]]);
+      
+      for (char j = 0; j < BOARD_WIDTH - 1; j++){
+        int csgnl = elevation(it[g_trn[0][i * BOARD_WIDTH + j + 1]]) - 
+                    elevation(it[g_trn[0][i * BOARD_WIDTH + j]]);
+        int csgnd = elevation(it[g_trn[1][i * BOARD_WIDTH + j + 1]]) - 
+                    elevation(it[g_trn[1][i * BOARD_WIDTH + j]]);
         
-        if (cl > pl) {
-          if (sl < 0)
-            cb++;
-          sl = 1;
-        } else {
-          if (sl > 0)
-            cb++;
-          sl = -1;
+        if (csgnl != 0) {
+          if (sign(csgnl) != sign(sgnl)) {
+            checkerboarding += Math.abs(csgnl - sgnl);
+          }
+          sgnl = csgnl;
         }
-        
-        if (cu > pu) {
-          if (su < 0)
-            cb++;
-          su = 1;
-        } else {
-          if (su > 0)
-            cb++;
-          su = -1;
+        if (csgnd != 0) {
+          if (sign(csgnd) != sign(sgnd)) {
+            checkerboarding += Math.abs(csgnd - sgnd);
+          }
+          sgnd = csgnd;
         }
       }
     }
     
-    return -cb;
+    return -checkerboarding;
   }
   
   private int elevation(int v) {
@@ -335,9 +348,64 @@ public class Board {
       }
     }
     
-    //System.out.println(smoothness);
+    //Edge case: Bottom-rightmost corner tile
+    //It's better to not include this tile --> causes concentration in this corner which is good
+    /*
+    int c = it[BOARD_SPACE - 1];
+    if (c != 0) {
+      int l = it[BOARD_SPACE - 2];
+      int u = it[BOARD_SPACE - BOARD_WIDTH - 1];
+      smoothness -= Math.abs(elevation(c) - elevation(l));
+      smoothness -= Math.abs(elevation(c) - elevation(u));
+    }
+    */
     
     return smoothness;
+  }
+  
+  public int lowUncombo() {
+    int uncombo = 0;
+    for (int i = 0; i < BOARD_WIDTH - 1; i++) {
+      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
+        int c = it[i * BOARD_WIDTH + j];
+        if (c > 0 && c < 3) {
+          int r = it[i * BOARD_WIDTH + j + 1];
+          int d = it[(i + 1) * BOARD_WIDTH + j];
+          
+          uncombo -= r < 3 && c == r ? 1 : 0;
+          uncombo -= d < 3 && c == d ? 1 : 0;
+        }
+      }
+    }
+    
+    return uncombo;
+  }
+  
+  public int monotonicity() {
+    int[] totals = new int[4];
+    
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
+        int cl = elevation(it[i * BOARD_WIDTH + j]);
+        int nl = elevation(it[i * BOARD_WIDTH + j + 1]);
+        int cu = elevation(it[g_trn[1][i * BOARD_WIDTH + j]]);
+        int nu = elevation(it[g_trn[1][i * BOARD_WIDTH + j + 1]]);
+        
+        if (cl > nl) {
+          totals[0] += cl - nl;
+        } else {
+          totals[1] += nl - cl;
+        }
+        
+        if (cu > nu) {
+          totals[2] += cu - nu;
+        } else {
+          totals[3] += nu - cu;
+        }
+      }
+    }
+    
+    return Math.max(totals[0], totals[1]) + Math.max(totals[2], totals[3]);
   }
   
   
