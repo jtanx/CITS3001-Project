@@ -106,7 +106,8 @@ public class Board {
   }
   
   public int nMoves() {
-    return c_sequence;
+    assert(path.length() == c_sequence);
+    return path.length();
   }
   
   public String moves() {
@@ -217,21 +218,40 @@ public class Board {
         char idx = (char)(i * BOARD_WIDTH + j);
         char pidx = (char)(idx - 1);
         
-        if (shift_valid(it[g_trn[0][idx]], it[g_trn[0][pidx]])) {
+        if (shift_valid(it[g_trn[0][idx]], it[g_trn[0][pidx]]))
           can_shift |= 1;
-        }
-        if (shift_valid(it[g_trn[1][idx]], it[g_trn[1][pidx]])) {
+        if (shift_valid(it[g_trn[1][idx]], it[g_trn[1][pidx]]))
           can_shift |= 2;
-        }
-        if (shift_valid(it[g_trn[2][idx]], it[g_trn[2][pidx]])) {
+        if (shift_valid(it[g_trn[2][idx]], it[g_trn[2][pidx]]))
           can_shift |= 4;
-        }
-        if (shift_valid(it[g_trn[3][idx]], it[g_trn[3][pidx]])) {
+        if (shift_valid(it[g_trn[3][idx]], it[g_trn[3][pidx]]))
           can_shift |= 8;
-        }
       }
     }
       
+    return (can_shift & 1) + ((can_shift & 2) >> 1) + 
+           ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
+  }
+  
+  public int dof2() {
+    char can_shift = 0;
+    for (char i = 0; i < BOARD_WIDTH; i++) {
+      for (char j = 1; j < BOARD_WIDTH; j++) {
+        int cl = it[i * BOARD_WIDTH + j];
+        int pl = it[i * BOARD_WIDTH + j - 1];
+        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
+        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
+        
+        if (shift_valid(cl, pl))
+          can_shift |= 1;
+        if (shift_valid(pl, cl))
+          can_shift |= 4;
+        if (shift_valid(cu, pu))
+          can_shift |= 2;
+        if (shift_valid(pu, cu))
+          can_shift |= 8;
+      }
+    }
     return (can_shift & 1) + ((can_shift & 2) >> 1) + 
            ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
   }
@@ -347,142 +367,7 @@ public class Board {
         }
       }
     }
-    
-    //Edge case: Bottom-rightmost corner tile
-    //It's better to not include this tile --> causes concentration in this corner which is good
-    /*
-    int c = it[BOARD_SPACE - 1];
-    if (c != 0) {
-      int l = it[BOARD_SPACE - 2];
-      int u = it[BOARD_SPACE - BOARD_WIDTH - 1];
-      smoothness -= Math.abs(elevation(c) - elevation(l));
-      smoothness -= Math.abs(elevation(c) - elevation(u));
-    }
-    */
-    
     return smoothness;
-  }
-  
-  public int lowUncombo() {
-    int uncombo = 0;
-    for (int i = 0; i < BOARD_WIDTH - 1; i++) {
-      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
-        int c = it[i * BOARD_WIDTH + j];
-        if (c > 0 && c < 3) {
-          int r = it[i * BOARD_WIDTH + j + 1];
-          int d = it[(i + 1) * BOARD_WIDTH + j];
-          
-          uncombo -= r < 3 && c == r ? 1 : 0;
-          uncombo -= d < 3 && c == d ? 1 : 0;
-        }
-      }
-    }
-    
-    return uncombo;
-  }
-  
-  public int monotonicity() {
-    int[] totals = new int[4];
-    
-    for (int i = 0; i < BOARD_WIDTH; i++) {
-      for (int j = 0; j < BOARD_WIDTH - 1; j++) {
-        int cl = elevation(it[i * BOARD_WIDTH + j]);
-        int nl = elevation(it[i * BOARD_WIDTH + j + 1]);
-        int cu = elevation(it[g_trn[1][i * BOARD_WIDTH + j]]);
-        int nu = elevation(it[g_trn[1][i * BOARD_WIDTH + j + 1]]);
-        
-        if (cl > nl) {
-          totals[0] += cl - nl;
-        } else {
-          totals[1] += nl - cl;
-        }
-        
-        if (cu > nu) {
-          totals[2] += cu - nu;
-        } else {
-          totals[3] += nu - cu;
-        }
-      }
-    }
-    
-    return Math.max(totals[0], totals[1]) + Math.max(totals[2], totals[3]);
-  }
-  
-  
-  public void solve_dfs(int[] s) {
-    Set<Board> candidate = new HashSet<Board>();
-    Set<Board> best = new HashSet<Board>();
-    int best_score, candidate_score = -1;
-    Stack<Board> rem = new Stack<Board>();
-    int count = 0;
-    long time = System.nanoTime();
-    
-    best_score = this.score();
-    best.add(this);
-    while (!best.isEmpty()) { //Got candidate paths left to follow
-      if (count++ % 10 == 0) {
-        if (!best.isEmpty()) {
-          for (Board b : best ) {
-            System.out.println(b);
-            System.out.println("SCORE: " + Integer.toString(b.score()));
-          }
-        }
-      }
-      for (Board b : best) {
-        b.depth = 0;
-        rem.push(b);
-      }
-      best.clear();
-      
-      while (!rem.isEmpty()) {
-        Board c = rem.pop();
-        
-        if (c.depth + 1 < 7) {
-          Board[] next = new Board[4];
-          Direction[] nextd = {Direction.LEFT, Direction.UP, 
-                               Direction.RIGHT, Direction.DOWN};
-          for (int i = 0; i < 4; i++) {
-            next[i] = new Board(c);
-            next[i].move(s, nextd[i]);
-            next[i].depth += 1;
-            
-            if (next[i].finished()) {
-              int score = next[i].score();
-              if (score > candidate_score) {
-                candidate.clear();
-                candidate_score = score;
-                candidate.add(next[i]);
-              } else if (score == candidate_score) {
-                candidate.add(next[i]);
-              }
-            } else {
-              rem.push(next[i]);
-            }
-          }
-        } else {
-          int score = c.score();
-          if (score > best_score) {
-            best.clear();
-            best_score = score;
-            best.add(c);
-          } else if (score == best_score) {
-            best.add(c);
-          }
-        }
-      }
-    }
-    
-    time = System.nanoTime() - time;
-    
-    for (Board b : candidate) {
-      System.out.println(b);
-      System.out.println(b.path.toString());
-      System.out.println(b.path.length() / (time / (1000000000.0)));
-      break;
-    }
-    System.out.println(candidate.size());
-    System.out.println(candidate_score);
-    
   }
   
   @Override public boolean equals(Object o) {

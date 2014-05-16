@@ -17,13 +17,20 @@ public class Solver {
   //private int[] factors = {18, 1, 11, 9}; //Gets  186920, 593529 for lb2
   //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
   //Zeros, smoothness, gthree, lowuncombo,
-  private int[] factors = {18, 9, 9, 6}; //Gets 187004
+  //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
+  private int[] factors = {18, 8, 9, 2}; //Gets 187004
+  
+  
 
   private int evaluate(Board b, int[] s) {
+    if (b.dof() != b.dof2()) {
+      System.out.printf("WTF");
+      
+    }
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
-           factors[1] * b.smoothness() + 
-           factors[2] * b.gthree() + 
-            factors[3] * b.lowUncombo() );
+           factors[1] * b.gthree() + 
+            factors[2] * b.smoothness() + 
+            factors[3] * b.checkerboarding2());
   }
   
   public void learn_factors(Board b, int[] s) {
@@ -32,8 +39,8 @@ public class Solver {
       Board best_board = null;
       float pc = 0;
       for (int i = 18; i < 19; i++) {
-          for (int j = 1; j < 19; j++) {
-              for (int k = 0; k < 14; k++) {
+          for (int j = 10; j < 19; j++) {
+              for (int k = 7; k < 14; k++) {
                 for (int l = 0; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
@@ -85,7 +92,9 @@ public class Solver {
       Board next = new Board(b);
       if (next.move(s, directions[i])) {
         Board candidate = solve_dfs(s, depthLimit, next, depth + 1);
-        
+        if (candidate == null && next.finished()) {
+          candidate = next;
+        }
         if (candidate != null) {
           if (candidate.finished()) {
             int score = candidate.score();
@@ -104,76 +113,6 @@ public class Solver {
       }
     }
     return best;
-  }
-  
-  private Board[] solve_idfs(int[] s, int depthLimit, int depth, Board... b) {
-    Direction[] directions = {Direction.LEFT, Direction.UP, 
-                              Direction.RIGHT, Direction.DOWN};
-    if (depth >= depthLimit) { //Cutoff test
-      return b;
-    }
-    
-    Board[] best = new Board[b.length];
-    int[] best_score = new int[b.length];
-    int considered = 0;
-    
-    for (int i = 0; i < b.length; i++)
-      best_score[i] = -1;
-    
-    for (int bc = 0; bc < b.length; bc++) {
-      if (b[bc] == null)
-        continue;
-      
-      for (int i = 0; i < BOARD_WIDTH; i++) {
-        Board next = new Board(b[bc]);
-        if (next.move(s, directions[i])) {
-          Board[] nn = {next, null};
-          Board[] candidates = solve_idfs(s, depthLimit, depth + 1, nn);
-          
-          for (Board candidate : candidates) {
-            if (candidate != null) {
-              if (candidate.finished()) {
-                int score = candidate.score();
-                if (score > fbest_score) {
-                  fbest_score = score;
-                  fbest = candidate;
-                }
-              } else {
-                int score = evaluate(candidate, s);
-                for (int ci = 0; ci < b.length; ci++) {
-                  if (score > best_score[ci]) {
-                    best_score[ci] = score;
-                    best[ci] = candidate;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-          considered++;
-        }
-      }
-
-      if (considered == 0) { //Terminal state: Cannot move in any direction
-        b[bc].finished(true);
-        int score = b[bc].score();
-        if (score > fbest_score) {
-          fbest_score = score;
-          fbest = b[bc];
-        }
-      }
-    }
-    
-    return best;
-  }
-  
-  public Board solve_idfs2(int[] s, Board b) {
-    Board[] r = {b, null};
-    while ((r = solve_idfs(s, MAX_DEPTH, 0, r))[0] != null) {
-      System.out.println(r[0]);
-      System.out.println(r[0].score());
-    }
-    return fbest;
   }
   
   public Board solve_idfs(int[] s, Board b) {

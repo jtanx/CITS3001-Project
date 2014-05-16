@@ -83,45 +83,6 @@ public class Threes {
       return;
     }
     
-    //checkerboarding.test();
-    //if(true) return;
-    /*
-    Board b = new Board(bt);
-    Scanner scan = new Scanner(System.in);
-    String d;
-    
-    System.out.println(b);
-    System.out.print("Enter move: ");
-    while (!(d = scan.next()).equals("q")) {
-      b.move(s, d);
-      System.out.println(b);
-      System.out.println(b.checkerboarding2());
-      System.out.print("Enter move: ");
-    }
-    
-    if (true) return;*/
-    
-    /*
-    Board b = new Board(bt);
-    //Direction[] moves = Direction.parse("UUURDUDDLLLRRLRRURLDRRRRRDDLUUURUDRURRDRLRRLLLRDRRLURRDRDURDRRRDRULLULLRULLDRUDRLRDLRRDDDDDULURDRRDDDURDDUDRRURDRDDURDLRDDDDDRUDUUDDDURRURDDULDRULULDLDRRLUURDDDDLDDUDDRDLRDLRDDLDUUDLLRLDDRDRRDURRLDRURLUUUDLDDDDRRDDDRUDLURLDRLLDDLDDLDDRDLLLDDUULLDRRRLURRDRDUDRRURDDLLLRDDRRLLLRRRRDDULURURDUUDLLDDRRLDUURRDULRRDRRDLLURRRUULRDLRDRRULRULURDRRDRDRDRRRLDDRDDRDRUDLDRDLRURRDDLURDLDRDULLDDRDRDLRULRDDDURURLDDLRDDRURRLDLRRDDLLDDURULURDDULUURLRRURDDRRLUDLDDLLDLLLDRDLURUURDDDLURURURDLDRUDRDDDRURUDDDLDUDDRDRDLULDRDLRULLRDUDLRDDLDDRRULULURULURLUURRDLUUDLRLRUUUDRRULUDRRURDDRRRURRRDUDULURURRDULLDURUDRLDDDUURUDDDRRRURRDDLULDRDRRLUDDLDRDLLUUURDRRDDLLDRDDRULDRDRRDDLDLDRULRUUDLDLDURDRDRRDLURURRUULDRULUUDLDUULDURRULLDLDRDDRLDDDRRDRDDDLUDRRDLDDLLLLDLDRRLDDDRDLDLULLDRDULDLDRRDRRLDLDDLDRLLURDULRURURDRUUDLULDDRUURRDRLRULDRRDLRRURURDDLDDURUUUUUDLRRUU");
-    Direction[] moves = new Direction[0];
-    int count = 1;
-    for (Direction move : moves) {
-      if (!b.move(s, move)){
-        System.out.println("WTF");
-        break;
-      }
-      else if (count == 81) {
-        
-        break;
-      }
-      System.out.println(count++);
-      System.out.println(b);
-    }
-    System.out.println(b.score());
-    System.out.println(b.finished());
-    */
-    
     Solver solver = new Solver();
     //solver.learn_factors(new Board(bt), s);
     //if (true) return;
