@@ -18,7 +18,7 @@ public class Solver {
   //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
   //Zeros, smoothness, gthree, lowuncombo,
   //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
-  private int[] factors = {18, 8, 9, 2}; //Gets 187004
+  private int[] factors = {18, 10, 10, 12};
   
   
 
@@ -27,6 +27,7 @@ public class Solver {
       System.out.printf("WTF");
       
     }
+    b.nMoves();
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
            factors[1] * b.gthree() + 
             factors[2] * b.smoothness() + 
@@ -66,7 +67,7 @@ public class Solver {
               }
               
             System.out.println("Currently at: (not best)");
-            for (int v : best) {
+            for (int v : factors) {
               System.out.printf("%d ", v);
             }
             System.out.println();
