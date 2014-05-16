@@ -50,8 +50,7 @@ public class Board {
     }
   };
   
-  private int[] it, pscores;
-  private int psindex;
+  private int[] it;
   private int c_sequence;
   private boolean finished;
   private int depth;
@@ -62,14 +61,11 @@ public class Board {
       throw new IllegalArgumentException("Invalid input board size");
     }
     it = Arrays.copyOf(board, board.length);
-    pscores = new int[3];
     path = new StringBuilder();
   }
   
   public Board(Board o) {
     this.it = Arrays.copyOf(o.it, o.it.length);
-    this.pscores = Arrays.copyOf(o.pscores, o.pscores.length);
-    this.psindex = o.psindex;
     this.c_sequence = o.c_sequence;
     this.finished = o.finished;
     this.depth = o.depth;
@@ -113,22 +109,6 @@ public class Board {
   
   public String moves() {
     return path.toString();
-  }
-  
-  //Percent variation in the last pscores.length move scores
-  public int variation() {
-    int diff = 0, total = pscores[psindex];
-    if (c_sequence >= pscores.length) {
-      for (int i = 1; i < pscores.length; i++) {
-        int p = (psindex + i - 1) % pscores.length;
-        int c = (psindex + i) % pscores.length;
-        diff += pscores[c] - pscores[p];
-        total += pscores[c];
-      }
-    
-      return (100 * diff) / total;
-    }
-    return 0;
   }
   
   public boolean move(int[] s, Direction d) {
@@ -186,9 +166,6 @@ public class Board {
       if (c_sequence >= s.length || dof() == 0) {
         finished = true;
       }
-      
-      pscores[psindex] = score();
-      psindex = (psindex + 1) % pscores.length;
     }
     return true;
   }
