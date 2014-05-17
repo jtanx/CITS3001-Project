@@ -262,17 +262,61 @@ public class Board {
         int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
         int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
         
-        if (cl == 0 || shift_valid(cl, pl))
-          nCombinable++;
-        if (shift_valid(pl, cl))
-          nCombinable++;
-        if (cu == 0 || shift_valid(cu, pu))
-          nCombinable++;
-        if (shift_valid(pu, cu))
-          nCombinable++;
+        if (cl != 0 && pl != 0) {
+          if (shift_valid(cl,pl) || shift_valid(pl, cl)) {
+            nCombinable++;
+          }
+        }
+        if (cu != 0 && pu != 0) {
+          if (shift_valid(cu, pu) || shift_valid(pu, cu)) {
+            nCombinable++;
+          }
+        }
       }
     }
     return nCombinable;
+  }
+  
+  public int gtaverage() {
+    int total = 0, gta = 0, max = 0;
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      int el = elevation(it[i]);
+      if (el > max)
+        max = el;
+      total += el;
+    }
+    total = (total - max) / (BOARD_SPACE - 1);
+    
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      if (elevation(it[i]) > total)
+        gta++;
+    }
+    return gta;
+  }
+  
+  public int gtmedian() {
+    int median;
+    int[] heights = new int[BOARD_SPACE];
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      heights[i] = elevation(it[i]);
+    }
+    Arrays.sort(heights);
+    median = (heights[BOARD_SPACE/2] + heights[BOARD_SPACE/2 + 1]) / 2;
+    return median;
+  }
+  
+  //Normalised to 0-20
+  public int amdiff() {
+    int mean = 0, max = 0;
+    for (int i = 0; i < BOARD_SPACE; i++) {
+      int el = elevation(it[i]);
+      if (el > max)
+        max = el;
+      mean += el;
+    }
+    mean = (mean) / (BOARD_SPACE - 1);
+    
+    return ((20 * (max - mean)) / max);
   }
   
   public boolean finished() {

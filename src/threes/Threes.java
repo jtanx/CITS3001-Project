@@ -84,8 +84,8 @@ public class Threes {
     }
     
     Solver solver = new Solver();
-    solver.learn_factors(new Board(bt), s);
-    if (true) return;
+    //solver.learn_factors(new Board(bt), s);
+    //if (true) return;
     long tim = System.nanoTime();
     Board bs = solver.solve_idfs(s, new Board(bt));
     //Board bs = ida.solve_mdfs(s, new Board(bt));

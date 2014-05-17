@@ -18,30 +18,29 @@ public class Solver {
   //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
   //Zeros, smoothness, gthree, lowuncombo,
   //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
-  private int[] factors = {18, 11, 5, 2}; //Maxes out lb2, pretty good for b1, pretty crap for exampleinput, 190k for lb1
+  //private int[] factors = {18, 11, 5, 2}; //Maxes out lb2, pretty good for b1, pretty crap for exampleinput, 190k for lb1
+  //private int[] factors = {18, 2, 2, 9}; //holy shit using gtaverge 
+  private int[] factors = {18, 1, 3, 10}; //hmm
   
-  
-
   private int evaluate(Board b, int[] s) {
     if (b.dof() != b.dof2()) {
       System.out.printf("WTF");
       
     }
-    b.nMoves();
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
-           factors[1] * b.gthree() + 
+           factors[1] * b.checkerboarding3() + 
             factors[2] * b.smoothness() + 
-            factors[3] * b.checkerboarding3());
+            factors[3] * b.nCombinable());
   }
   
   public void learn_factors(Board b, int[] s) {
       int[] best = new int[factors.length];
       int best_score = -1;
       Board best_board = null;
-      float pc = 0;
+      
       for (int i = 18; i < 19; i++) {
-          for (int j = 12; j < 19; j++) {
-              for (int k = 2; k < 14; k++) {
+          for (int j =1; j < 19; j++) {
+              for (int k = 3; k < 14; k++) {
                 for (int l = 0; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
@@ -53,10 +52,14 @@ public class Solver {
                         best_score = score;
                         best_board = n;
                     }
+                    System.out.printf("Current score: %d\n", score);
+                    for (int v : factors) {
+                      System.out.printf("%d ", v);
+                    }
+                    System.out.println();
                 }
-                pc += 15.0/(15*15*15);
-                System.out.printf("%.2f%%\n", pc * 100);
                 if (best_board != null) {
+                    System.out.println("Current best:");
                     System.out.println(best_board);
                     System.out.println(best_board.score());
                 }
@@ -65,12 +68,6 @@ public class Solver {
                 }
                 System.out.println();
               }
-              
-            System.out.println("Currently at: (not best)");
-            for (int v : factors) {
-              System.out.printf("%d ", v);
-            }
-            System.out.println();
           }
       }
     for (int v : best)
@@ -118,11 +115,13 @@ public class Solver {
   }
   
   public Board solve_idfs(int[] s, Board b) {
+    fbest_score = -1;
+    fbest = null;
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        //System.out.println(b);
-        //System.out.println(b.score());
+        System.out.println(b);
+        System.out.println(b.score());
       }
     }
     return fbest;
