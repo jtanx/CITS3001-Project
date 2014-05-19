@@ -19,8 +19,11 @@ public class Solver {
   //Zeros, smoothness, gthree, lowuncombo,
   //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
   //private int[] factors = {18, 11, 5, 2}; //Maxes out lb2, pretty good for b1, pretty crap for exampleinput, 190k for lb1
+  //zeros, checkerboarding3, smoothness, gtaverage
   //private int[] factors = {18, 2, 2, 9}; //holy shit using gtaverge 
-  private int[] factors = {18, 1, 3, 10}; //hmm
+  //zeros, checkerboarding3, smoothness, ncombinable
+  //private int[] factors = {18, 1, 3, 10}; //hmm quite good, using ncombinable
+  private int[] factors = {18,2,2,9}; //ncombinable not to confuse with gta
   
   private int evaluate(Board b, int[] s) {
     if (b.dof() != b.dof2()) {
@@ -39,9 +42,9 @@ public class Solver {
       Board best_board = null;
       
       for (int i = 18; i < 19; i++) {
-          for (int j =1; j < 19; j++) {
-              for (int k = 3; k < 14; k++) {
-                for (int l = 0; l < 14; l++) {
+          for (int j = 2; j < 19; j++) {
+              for (int k = 1; k < 14; k++) {
+                for (int l = 6; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
 
@@ -120,8 +123,8 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        System.out.println(b);
-        System.out.println(b.score());
+        //System.out.println(b);
+        //System.out.println(b.score());
       }
     }
     return fbest;
