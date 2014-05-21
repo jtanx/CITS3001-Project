@@ -24,14 +24,17 @@ public class Solver {
   //zeros, checkerboarding3, smoothness, ncombinable
   //private int[] factors = {18, 1, 3, 10}; //hmm quite good, using ncombinable
   private int[] factors = {18,2,2,9}; //ncombinable not to confuse with gta
+  //private int[] factors = {18, 5, 10, 9}; //ncombinable not to confuse with gta
   //private int[] factors = {18,2,1,8}; //ncombinable2
   //private int[] closefactors = {18, 3, 1, 9}; //nc2 763 for eg1, 1012 for b1
   //private int[] closefactors = {18, 5, 1, 10}; //nc1 559 569 5610
   //private int[] closefactors = {18, 5, 6, 10}; //nc1 559 569 5610 - 763
-  private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
+  //private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 11, 9}; //nc1 559 569 5610 - oh jackpot
-  //private int[] closefactors = {18, 6, 3, 12}; //no jackpot (past it...)
+  //private int[] closefactors = {18, 7,8,11}; //Oh jackpot
+  //private int[] closefactors = {18, 7,9,11}; //Oh jackpot
+  private int[] closefactors = {18, 7,9,12}; //Oh jackpot
   //18,4,7,9 for nc1
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
@@ -62,7 +65,7 @@ public class Solver {
       Board best_board = null;
       
       for (int i = 18; i < 19; i++) {
-          for (int j = 1; j < 19; j++) {
+          for (int j = 5; j < 19; j++) {
               for (int k = 1; k < 14; k++) {
                 for (int l = 1; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
@@ -184,8 +187,9 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        System.out.println(b);
-        System.out.println(b.score());
+        //System.out.println(b);
+        //System.out.println(b.score());
+        //System.out.println(b.nMoves());
       }
     }
     return fbest;
