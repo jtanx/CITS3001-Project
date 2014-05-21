@@ -24,11 +24,31 @@ public class Solver {
   //zeros, checkerboarding3, smoothness, ncombinable
   //private int[] factors = {18, 1, 3, 10}; //hmm quite good, using ncombinable
   private int[] factors = {18,2,2,9}; //ncombinable not to confuse with gta
-  
+  //private int[] factors = {18,2,1,8}; //ncombinable2
+  //private int[] closefactors = {18, 3, 1, 9}; //nc2 763 for eg1, 1012 for b1
+  //private int[] closefactors = {18, 5, 1, 10}; //nc1 559 569 5610
+  //private int[] closefactors = {18, 5, 6, 10}; //nc1 559 569 5610 - 763
+  private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
+  //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
+  //private int[] closefactors = {18, 5, 11, 9}; //nc1 559 569 5610 - oh jackpot
+  //private int[] closefactors = {18, 6, 3, 12}; //no jackpot (past it...)
+  //18,4,7,9 for nc1
+  //TODO:
+  //Edge case: As we're approaching the end of a sequence, try to maximise score...
+  //Possible change to ncombinable: Weight combinables that increase the score significantly
   private int evaluate(Board b, int[] s) {
+    int[] thefactors = factors;
     if (b.dof() != b.dof2()) {
       System.out.printf("WTF");
-      
+    }
+    
+    //if (false) {
+    if (b.nMoves() + MAX_DEPTH * 2 >= s.length) {
+      //System.out.println(b.nMoves());
+      return (int)(Math.pow(4, b.dof()) + closefactors[0] * b.zeros() + 
+              closefactors[1] * b.checkerboarding3() +
+              closefactors[2] * b.smoothness() +
+              closefactors[3] * b.nCombinable());
     }
     return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
            factors[1] * b.checkerboarding3() + 
@@ -42,9 +62,9 @@ public class Solver {
       Board best_board = null;
       
       for (int i = 18; i < 19; i++) {
-          for (int j = 2; j < 19; j++) {
+          for (int j = 1; j < 19; j++) {
               for (int k = 1; k < 14; k++) {
-                for (int l = 6; l < 14; l++) {
+                for (int l = 1; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
 
@@ -78,6 +98,47 @@ public class Solver {
     System.out.println();
   }
   
+  public void learn_cfactors(Board b, int[] s) {
+      int[] best = new int[closefactors.length];
+      int best_score = -1;
+      Board best_board = null;
+      
+      for (int i = 18; i < 19; i++) {
+          for (int j = 1; j < 19; j++) {
+              for (int k = 1; k < 14; k++) {
+                for (int l = 1; l < 14; l++) {
+                    closefactors[0] = i; closefactors[1] = j;
+                    closefactors[2] = k; closefactors[3] = l; 
+
+                    Board n = solve_idfs(s, b);
+                    int score = n.score();
+                    if (score > best_score) {
+                        System.arraycopy(closefactors, 0, best, 0, best.length);
+                        best_score = score;
+                        best_board = n;
+                    }
+                    System.out.printf("Current score: %d\n", score);
+                    for (int v : closefactors) {
+                      System.out.printf("%d ", v);
+                    }
+                    System.out.println();
+                }
+                if (best_board != null) {
+                    System.out.println("Current best:");
+                    System.out.println(best_board);
+                    System.out.println(best_board.score());
+                }
+                for (int v : best) {
+                    System.out.printf("%d ", v);
+                }
+                System.out.println();
+              }
+          }
+      }
+    for (int v : best)
+      System.out.printf("%d ", v);
+    System.out.println();
+  }
   
   private Board solve_dfs(int[] s, int depthLimit, Board b, int depth) {
     Direction[] directions = {Direction.LEFT, Direction.UP, 
@@ -123,8 +184,8 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        //System.out.println(b);
-        //System.out.println(b.score());
+        System.out.println(b);
+        System.out.println(b.score());
       }
     }
     return fbest;

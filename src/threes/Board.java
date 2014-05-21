@@ -277,6 +277,30 @@ public class Board {
     return nCombinable;
   }
   
+  public int nCombinable2() {
+    int nCombinable = 0;
+    for (char i = 0; i < BOARD_WIDTH; i++) {
+      for (char j = 1; j < BOARD_WIDTH; j++) {
+        int cl = it[i * BOARD_WIDTH + j];
+        int pl = it[i * BOARD_WIDTH + j - 1];
+        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
+        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
+        
+        if (cl != 0 && pl != 0) {
+          if (shift_valid(cl,pl) || shift_valid(pl, cl)) {
+            nCombinable += Math.max(elevation(Math.max(cl,pl)), 1);
+          }
+        }
+        if (cu != 0 && pu != 0) {
+          if (shift_valid(cu, pu) || shift_valid(pu, cu)) {
+            nCombinable += Math.max(elevation(Math.max(cu,pu)), 1);
+          }
+        }
+      }
+    }
+    return nCombinable;
+  }
+  
   public int gtaverage() {
     int total = 0, gta = 0, max = 0;
     for (int i = 0; i < BOARD_SPACE; i++) {
