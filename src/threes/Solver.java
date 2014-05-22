@@ -12,54 +12,38 @@ public class Solver {
   private Board fbest = null;
   private int fbest_score = -1;
   
-  //Zeros, checkerboarding2/3, gthree, smoothness
-  //private int[] factors = {18, 0, 6, 10}; //Gets 187004
-  //private int[] factors = {18, 1, 11, 9}; //Gets  186920, 593529 for lb2
-  //private int[] factors = {18,1,2,4}; //Gets ~204k on lb1 using cb3, but only ~200k for lb2
-  //Zeros, smoothness, gthree, lowuncombo,
-  //private int[] factors = {18, 9, 11, 1 }; //~266k on lb3 using cb2
-  //private int[] factors = {18, 11, 5, 2}; //Maxes out lb2, pretty good for b1, pretty crap for exampleinput, 190k for lb1
-  //zeros, checkerboarding3, smoothness, gtaverage
-  //private int[] factors = {18, 2, 2, 9}; //holy shit using gtaverge 
-  //zeros, checkerboarding3, smoothness, ncombinable
-  //private int[] factors = {18, 1, 3, 10}; //hmm quite good, using ncombinable
-  //private int[] factors = {18,2,2,9}; //The best
-  private int[] factors = {18,6,2,0};
+  private int[] factors = {18,2,2,9}; //The best
+  //private final int[] factors = {18,6,2,0}; //For trying to continue lb1
   //private int[] factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails
-//private int[] factors = {18, 5, 10, 9}; //ncombinable not to confuse with gta
-  //private int[] factors = {18,2,1,8}; //ncombinable2
-  //private int[] closefactors = {18, 3, 1, 9}; //nc2 763 for eg1, 1012 for b1
-  //private int[] closefactors = {18, 5, 1, 10}; //nc1 559 569 5610
-  //private int[] closefactors = {18, 5, 6, 10}; //nc1 559 569 5610 - 763
-  private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
+  
+  private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 11, 9}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 7,8,11}; //Oh jackpot, but not for lb2
   //private int[] closefactors = {18, 7,9,11}; //Oh jackpot, but not for lb2
   //private int[] closefactors = {18, 7,9,12}; //Oh jackpot, but not for lb2
   //18,4,7,9 for nc1
+  
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
   //Possible change to ncombinable: Weight combinables that increase the score significantly
   private int evaluate(Board b, int[] s) {
     int[] thefactors = factors;
-    if (b.dof() != b.dof2()) {
-      System.out.printf("WTF");
+    if (b.dof() != b.dof2()) { //DOF is faster than DOF2. This is now just for checking
+      throw new RuntimeException("WTF");
     }
     
     //if (false) {
     //We are close to the end of the sequence! Use different weights!
     if (b.nMoves() + MAX_DEPTH * 2 >= s.length) {
       //System.out.println(b.nMoves());
-      return (int)(Math.pow(4, b.dof()) + closefactors[0] * b.zeros() + 
-              closefactors[1] * b.checkerboarding3() +
-              closefactors[2] * b.smoothness() +
-              closefactors[3] * b.nCombinable());
+      thefactors = closefactors;
     }
-    return (int)(Math.pow(4, b.dof()) + factors[0] * b.zeros() + 
-           factors[1] * b.checkerboarding3() + 
-            factors[2] * b.smoothness() + 
-            factors[3] * b.nCombinable());
+    return ((int)Math.pow(4, b.dof())) + 
+           thefactors[0] * b.zeros() + 
+           thefactors[1] * b.checkerboarding3() + 
+           thefactors[2] * b.smoothness() + 
+           thefactors[3] * b.nCombinable();
   }
   
   public void learn_factors(Board b, int[] s) {
