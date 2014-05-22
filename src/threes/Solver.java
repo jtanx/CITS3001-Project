@@ -23,18 +23,20 @@ public class Solver {
   //private int[] factors = {18, 2, 2, 9}; //holy shit using gtaverge 
   //zeros, checkerboarding3, smoothness, ncombinable
   //private int[] factors = {18, 1, 3, 10}; //hmm quite good, using ncombinable
-  private int[] factors = {18,2,2,9}; //ncombinable not to confuse with gta
-  //private int[] factors = {18, 5, 10, 9}; //ncombinable not to confuse with gta
+  //private int[] factors = {18,2,2,9}; //The best
+  private int[] factors = {18,6,2,0};
+  //private int[] factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails
+//private int[] factors = {18, 5, 10, 9}; //ncombinable not to confuse with gta
   //private int[] factors = {18,2,1,8}; //ncombinable2
   //private int[] closefactors = {18, 3, 1, 9}; //nc2 763 for eg1, 1012 for b1
   //private int[] closefactors = {18, 5, 1, 10}; //nc1 559 569 5610
   //private int[] closefactors = {18, 5, 6, 10}; //nc1 559 569 5610 - 763
-  //private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
+  private int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 11, 9}; //nc1 559 569 5610 - oh jackpot
-  //private int[] closefactors = {18, 7,8,11}; //Oh jackpot
-  //private int[] closefactors = {18, 7,9,11}; //Oh jackpot
-  private int[] closefactors = {18, 7,9,12}; //Oh jackpot
+  //private int[] closefactors = {18, 7,8,11}; //Oh jackpot, but not for lb2
+  //private int[] closefactors = {18, 7,9,11}; //Oh jackpot, but not for lb2
+  //private int[] closefactors = {18, 7,9,12}; //Oh jackpot, but not for lb2
   //18,4,7,9 for nc1
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
@@ -46,6 +48,7 @@ public class Solver {
     }
     
     //if (false) {
+    //We are close to the end of the sequence! Use different weights!
     if (b.nMoves() + MAX_DEPTH * 2 >= s.length) {
       //System.out.println(b.nMoves());
       return (int)(Math.pow(4, b.dof()) + closefactors[0] * b.zeros() + 
@@ -65,9 +68,9 @@ public class Solver {
       Board best_board = null;
       
       for (int i = 18; i < 19; i++) {
-          for (int j = 5; j < 19; j++) {
-              for (int k = 1; k < 14; k++) {
-                for (int l = 1; l < 14; l++) {
+          for (int j = 0; j < 19; j++) {
+              for (int k = 0; k < 14; k++) {
+                for (int l = 0; l < 14; l++) {
                     factors[0] = i; factors[1] = j;
                     factors[2] = k; factors[3] = l; 
 
@@ -78,7 +81,8 @@ public class Solver {
                         best_score = score;
                         best_board = n;
                     }
-                    System.out.printf("Current score: %d\n", score);
+                    System.out.printf("Current score: %d (%d moves)\n", 
+                            score, n.nMoves());
                     for (int v : factors) {
                       System.out.printf("%d ", v);
                     }
@@ -87,7 +91,8 @@ public class Solver {
                 if (best_board != null) {
                     System.out.println("Current best:");
                     System.out.println(best_board);
-                    System.out.println(best_board.score());
+                    System.out.printf("%d (%d moves)\n", 
+                            best_board.score(), best_board.nMoves() );
                 }
                 for (int v : best) {
                     System.out.printf("%d ", v);
@@ -120,7 +125,8 @@ public class Solver {
                         best_score = score;
                         best_board = n;
                     }
-                    System.out.printf("Current score: %d\n", score);
+                    System.out.printf("Current score: %d (%d moves)\n", 
+                            score, n.nMoves());
                     for (int v : closefactors) {
                       System.out.printf("%d ", v);
                     }
@@ -129,7 +135,8 @@ public class Solver {
                 if (best_board != null) {
                     System.out.println("Current best:");
                     System.out.println(best_board);
-                    System.out.println(best_board.score());
+                    System.out.printf("%d (%d moves)\n", 
+                            best_board.score(), best_board.nMoves() );
                 }
                 for (int v : best) {
                     System.out.printf("%d ", v);
@@ -182,6 +189,7 @@ public class Solver {
   }
   
   public Board solve_idfs(int[] s, Board b) {
+    Board input = b;
     fbest_score = -1;
     fbest = null;
     while (b != null && !b.finished()) {
@@ -190,9 +198,35 @@ public class Solver {
         //System.out.println(b);
         //System.out.println(b.score());
         //System.out.println(b.nMoves());
+        //Thought: What if we stored say the past 5 such moves,
+        //And if we hit a dead end, we backtrack and use another heuristic????
       }
     }
-    return fbest;
+    
+    //Super edge-case: The input board can't be moved...
+    return fbest == null ? input : fbest;
+  }
+  
+  public Board solve_mdfs(int[] s, Board b) {
+    Board[] ringbuffer = new Board[2];
+    Board current = b;
+    char p = 0;
+    
+    fbest_score = -1;
+    fbest = null;
+    while (current != null && !current.finished()) {
+      current = solve_dfs(s, MAX_DEPTH, current, 0);
+      if (current != null) {
+        ringbuffer[p] = current;
+        p = (char)(1 - p);
+      } else if (ringbuffer[1 - p] != null) {
+        current = ringbuffer[1 - p];
+        ringbuffer[1 - p] = null;
+        p = (char)(1 - p);
+      }
+    }
+    
+    return fbest == null ? b : fbest;
   }
   
 }
