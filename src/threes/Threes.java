@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import threes.Board.Direction;
 
 /**
  *
@@ -66,12 +68,34 @@ public class Threes {
     return result;
   }
   
+  private static List<Direction> parseMoves(String file) throws IOException {
+    BufferedReader br = null;
+    List<Direction> moves = new ArrayList<Direction>();
+    
+    try {
+      String c;
+      br = new BufferedReader(new FileReader(file));
+      br.readLine();
+      br.readLine();
+      
+      while ((c = br.readLine()) != null) {
+        Direction.parse(moves, c);
+      }
+    } finally {
+      if (br != null) {
+        br.close();
+      }
+    }
+    
+    return moves;
+  }
+  
   /**
    * @param args the command line arguments
    */
   public static void main(String[] args) {
     int[] bt = new int[Board.BOARD_SPACE], s;
-    if (args.length != 1){
+    if (args.length < 1){
       System.out.println("Usage: threes file_in.txt");
       return;
     }
@@ -80,6 +104,34 @@ public class Threes {
       s = parseFile(args[0], bt);
     } catch (IOException e) {
       System.out.printf("Invalid file %s: %s\n", args[0], e.getMessage());
+      return;
+    }
+    
+    if (args.length == 2) {
+      List<Direction> moves;
+      try {
+        moves = parseMoves(args[1]);
+      } catch (IOException e) {
+        System.out.printf("Invalid input moves file %s: %s\n",
+                args[1], e.getMessage());
+        return;
+      }
+      
+      long time = System.nanoTime();
+      for (int i = 0; i < 40000; i++) {
+        System.out.printf("Move %d\n", i);
+        Board b = new Board(bt);
+        for (Direction move : moves) {
+          if (!b.move(s, move)) {
+            System.err.println("Failed to move!");
+            break;
+          }
+        }
+      }
+      
+      time = System.nanoTime() - time;
+      System.out.println(time / 1000000000.0);
+      
       return;
     }
     
