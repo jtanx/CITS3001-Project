@@ -34,9 +34,7 @@ public class Board {
       return t;
     }
     
-    public static Direction[] parse(String s) {
-      List<Direction> m = new ArrayList<Direction>();
-      Direction[] d = new Direction[0];
+    public static void parse (List<Direction> m, String s) {
       for (char c : s.toCharArray()) {
         switch(Character.toLowerCase(c)) {
           case 'l': m.add(LEFT); break;
@@ -45,8 +43,13 @@ public class Board {
           case 'd': m.add(DOWN); break;
         }
       }
+    }
+    
+    public static List<Direction> parse(String s) {
+      List<Direction> m = new ArrayList<Direction>();
+      parse(m, s);
       
-      return m.toArray(d);
+      return m;
     }
   };
   
@@ -171,7 +174,7 @@ public class Board {
   }
   
   public boolean move(int[] s, String moveSequence) {
-    Direction[] moves = Direction.parse(moveSequence);
+    List<Direction> moves = Direction.parse(moveSequence);
     boolean ret = false;
     
     for (Direction move : moves) {
@@ -215,11 +218,11 @@ public class Board {
         char idx = (char)(i * BOARD_WIDTH + j);
         char pidx = (char)(idx - 1);
         
-        if (shift_valid(it[g_trn[0][idx]], it[g_trn[0][pidx]]))
+        if (shift_valid(it[idx], it[pidx]))
           can_shift |= 1;
         if (shift_valid(it[g_trn[1][idx]], it[g_trn[1][pidx]]))
           can_shift |= 2;
-        if (shift_valid(it[g_trn[2][idx]], it[g_trn[2][pidx]]))
+        if (shift_valid(it[pidx], it[idx]))
           can_shift |= 4;
         if (shift_valid(it[g_trn[3][idx]], it[g_trn[3][pidx]]))
           can_shift |= 8;
