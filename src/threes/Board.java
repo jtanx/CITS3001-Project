@@ -465,27 +465,12 @@ public class Board {
     return smoothness;
   }
   
-  @Override public boolean equals(Object o) {
-    if (o != null && o instanceof Board) {
-      return this.c_sequence == ((Board)o).c_sequence &&
-             Arrays.equals(this.it, ((Board)o).it);
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    int hash = 7;
-    hash = 79 * hash + Arrays.hashCode(this.it);
-    hash = 79 * hash + this.c_sequence;
-    return hash;
-  }
-  
   @Override
   public String toString() {
     Formatter f = new Formatter();
     String nl = System.getProperty("line.separator");
     
+    f.format("%d (%d) %s", score(), c_sequence,  nl);
     for (int i = 0; i < BOARD_WIDTH; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         f.format("%3d ", it[i*BOARD_WIDTH + j]);

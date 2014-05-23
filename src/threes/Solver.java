@@ -12,9 +12,9 @@ public class Solver {
   private Board fbest = null;
   private int fbest_score = -1;
   
-  private int[] factors = {18,2,2,9}; //The best
-  //private final int[] factors = {18,6,2,0}; //For trying to continue lb1
-  //private int[] factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails
+  private final int[] factors = {18,2,2,9}; //The best
+  private final int[] lb1factors = {18,6,2,0}; //For trying to continue lb1
+  private final int[] lb3factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails for lb3
   
   private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
   //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
@@ -24,11 +24,15 @@ public class Solver {
   //private int[] closefactors = {18, 7,9,12}; //Oh jackpot, but not for lb2
   //18,4,7,9 for nc1
   
+  
+  private int[] currentfactors = factors;
+  private final int[][] choicefactors = {factors, lb3factors, lb1factors};
+  
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
   //Possible change to ncombinable: Weight combinables that increase the score significantly
   private int evaluate(Board b, int[] s) {
-    int[] thefactors = factors;
+    int[] thefactors = currentfactors;
     if (b.dof() != b.dof2()) { //DOF is faster than DOF2. This is now just for checking
       throw new RuntimeException("WTF");
     }
@@ -133,6 +137,7 @@ public class Solver {
     Board input = b;
     fbest_score = -1;
     fbest = null;
+    currentfactors = factors;
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
@@ -149,21 +154,47 @@ public class Solver {
   }
   
   public Board solve_mdfs(int[] s, Board b) {
-    Board[] ringbuffer = new Board[2];
-    Board current = b;
-    char p = 0;
+    Ringbuffer<Board> rb = new Ringbuffer<Board>(3);
+    Board current = b, choke_best = null;
+    char p = 0, fc = 0, foff = 0;
     
     fbest_score = -1;
     fbest = null;
     while (current != null && !current.finished()) {
+      rb.push(current);
       current = solve_dfs(s, MAX_DEPTH, current, 0);
+      
+      if (choke_best != null && choke_best != fbest) {
+        System.out.printf("Recovery!: %d(%d) --> %d(%d)\n",
+                choke_best.score(), choke_best.nMoves(),
+                fbest.score(), fbest.nMoves());
+        choke_best = null;
+        //Test: Is it always best to stick to 18,2,2,9 where possible?
+        foff = 0;
+        currentfactors = choicefactors[0];
+      }
+      
       if (current != null) {
-        ringbuffer[p] = current;
-        p = (char)(1 - p);
-      } else if (ringbuffer[1 - p] != null) {
-        current = ringbuffer[1 - p];
-        ringbuffer[1 - p] = null;
-        p = (char)(1 - p);
+        System.out.println(current);
+      } else if (fbest != null && fbest.nMoves() < s.length) {
+        current = rb.pop();
+        
+        if (choke_best != fbest) {
+          choke_best = fbest;
+          foff = (char)((foff + 1) % choicefactors.length);
+          fc = 0;
+          currentfactors = choicefactors[foff];
+          System.out.println("Dead-end, back-tracking two steps and trying with different weights!");
+          System.out.printf("Starting index: %d (current score %d/%d)\n",
+                  (int)foff, current.score(), current.nMoves());
+        } else if (fc < choicefactors.length) {
+          currentfactors = choicefactors[(++fc + foff) % choicefactors.length];
+          System.out.printf("No improvement, trying factor index %d...\n",
+                  (fc + foff) % choicefactors.length);
+        } else {
+          current = null;
+          System.out.println("Factor exhaustion");
+        }
       }
     }
     
