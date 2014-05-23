@@ -39,17 +39,25 @@ public class Threes {
         p = c.split("[^0-9]");
         for (int j = 0, k = 0; j < Board.BOARD_WIDTH && k < p.length; k++) {
           if (!p[k].isEmpty()) {
-            b[i * Board.BOARD_WIDTH + j++] = Integer.parseInt(p[k]);
+            int val = Integer.parseInt(p[k]);
+            if (!Board.valid_tile(val)) {
+              throw new IllegalArgumentException(
+                      "Invalid tile value: " + p[k] + " - " + c);
+            }
+            b[i * Board.BOARD_WIDTH + j++] = val;
           }
         }
       }
       br.readLine(); //Skip line
 
       while ((c = br.readLine()) != null) {
-        String[] p = c.split("[^0-9]");
-        for (int k = 0; k < p.length; k++) {
-          if (!p[k].isEmpty()) {
-            Integer a = Integer.parseInt(p[k]);
+        for (String p : c.split("[^0-9]")) {
+          if (!p.isEmpty()) {
+            Integer a = Integer.parseInt(p);
+            if (!Board.valid_tile(a)) {
+              throw new IllegalArgumentException(
+                      "Invalid tile value: " + p + " - " + c);
+            }
             sequence.add(a);
           }
         }
@@ -136,8 +144,8 @@ public class Threes {
     }
     
     Solver solver = new Solver();
-    //solver.learn_factors(new Board(bt), s);
-    //solver.learn_cfactors(new Board(bt), s);
+    //solver.learn_factors(new Board(bt), s, false);
+    //solver.learn_factors(new Board(bt), s, true);
     //if (true) return;
     long tim = System.nanoTime();
     Board bs = solver.solve_idfs(s, new Board(bt));

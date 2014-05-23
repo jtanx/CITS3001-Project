@@ -46,8 +46,9 @@ public class Solver {
            thefactors[3] * b.nCombinable();
   }
   
-  public void learn_factors(Board b, int[] s) {
-      int[] best = new int[factors.length];
+  public void learn_factors(Board b, int[] s, boolean learnClose) {
+      int[] fl = learnClose ? closefactors : factors;
+      int[] best = new int[fl.length];
       int best_score = -1;
       Board best_board = null;
       
@@ -55,8 +56,8 @@ public class Solver {
           for (int j = 0; j < 19; j++) {
               for (int k = 0; k < 14; k++) {
                 for (int l = 0; l < 14; l++) {
-                    factors[0] = i; factors[1] = j;
-                    factors[2] = k; factors[3] = l; 
+                    fl[0] = i; fl[1] = j;
+                    fl[2] = k; fl[3] = l; 
 
                     Board n = solve_idfs(s, b);
                     int score = n.score();
@@ -67,51 +68,7 @@ public class Solver {
                     }
                     System.out.printf("Current score: %d (%d moves)\n", 
                             score, n.nMoves());
-                    for (int v : factors) {
-                      System.out.printf("%d ", v);
-                    }
-                    System.out.println();
-                }
-                if (best_board != null) {
-                    System.out.println("Current best:");
-                    System.out.println(best_board);
-                    System.out.printf("%d (%d moves)\n", 
-                            best_board.score(), best_board.nMoves() );
-                }
-                for (int v : best) {
-                    System.out.printf("%d ", v);
-                }
-                System.out.println();
-              }
-          }
-      }
-    for (int v : best)
-      System.out.printf("%d ", v);
-    System.out.println();
-  }
-  
-  public void learn_cfactors(Board b, int[] s) {
-      int[] best = new int[closefactors.length];
-      int best_score = -1;
-      Board best_board = null;
-      
-      for (int i = 18; i < 19; i++) {
-          for (int j = 1; j < 19; j++) {
-              for (int k = 1; k < 14; k++) {
-                for (int l = 1; l < 14; l++) {
-                    closefactors[0] = i; closefactors[1] = j;
-                    closefactors[2] = k; closefactors[3] = l; 
-
-                    Board n = solve_idfs(s, b);
-                    int score = n.score();
-                    if (score > best_score) {
-                        System.arraycopy(closefactors, 0, best, 0, best.length);
-                        best_score = score;
-                        best_board = n;
-                    }
-                    System.out.printf("Current score: %d (%d moves)\n", 
-                            score, n.nMoves());
-                    for (int v : closefactors) {
+                    for (int v : fl) {
                       System.out.printf("%d ", v);
                     }
                     System.out.println();

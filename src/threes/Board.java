@@ -75,13 +75,17 @@ public class Board {
     this.path = new StringBuilder(o.path);
   }
   
-  private boolean shift_valid(int from, int to) {
+  private static boolean shift_valid(int from, int to) {
     return (from != 0 && to == 0) || (from == 1 && to == 2)
             || (from == 2 && to == 1) || (from > 2 && from == to);
   }
   
-  private boolean is_pow2(int v) {
+  private static boolean is_pow2(int v) {
     return ((v) != 0) && (((v) & ((v) - 1) ) == 0);
+  }
+  
+  public static boolean valid_tile(int v) {
+    return v >= 0 && v < 3 || (v % 3 == 0 && is_pow2(v/3));
   }
   
   private char insert_mask(char seq_rows, char seq_trn[]) {
@@ -280,6 +284,7 @@ public class Board {
     return nCombinable;
   }
   
+  //Not useful
   public int nCombinable2() {
     int nCombinable = 0;
     for (char i = 0; i < BOARD_WIDTH; i++) {
@@ -304,6 +309,7 @@ public class Board {
     return nCombinable;
   }
   
+  //Not useful
   public int gtaverage() {
     int total = 0, gta = 0, max = 0;
     for (int i = 0; i < BOARD_SPACE; i++) {
@@ -321,6 +327,7 @@ public class Board {
     return gta;
   }
   
+  //Not useful
   public int gtmedian() {
     int median;
     int[] heights = new int[BOARD_SPACE];
@@ -332,7 +339,7 @@ public class Board {
     return median;
   }
   
-  //Normalised to 0-20
+  //Normalised to 0-20. Not useful
   public int amdiff() {
     int mean = 0, max = 0;
     for (int i = 0; i < BOARD_SPACE; i++) {
@@ -350,10 +357,6 @@ public class Board {
     return finished;
   }
   
-  public void finished(boolean is) {
-    finished = is;
-  }
-  
   public int zeros() {
     int n_z = 0;
     for (int i = 0; i < BOARD_SPACE; i++)
@@ -362,6 +365,7 @@ public class Board {
     return n_z;
   }
   
+  //Not useful
   public int gthree() {
     int n_z = 0;
     for (int i = 0; i < BOARD_SPACE; i++)
@@ -374,6 +378,7 @@ public class Board {
     return v < 0 ? -1 : v > 0 ? 1 : 0;
   }
   
+  //Not as useful
   public int checkerboarding2() {
     int nSwitches = 0;
     
