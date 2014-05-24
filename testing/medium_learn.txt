@@ -1,0 +1,185 @@
+Current score: 27628 (418 moves)
+18 0 0 0 
+Current score: 29250 (449 moves)
+18 0 0 1 
+Current score: 29250 (449 moves)
+18 0 0 2 
+Current score: 29250 (449 moves)
+18 0 0 3 
+Current score: 29250 (449 moves)
+18 0 0 4 
+Current score: 27666 (420 moves)
+18 0 0 5 
+Current score: 27666 (420 moves)
+18 0 0 6 
+Current score: 30010 (472 moves)
+18 0 0 7 
+Current score: 27666 (420 moves)
+18 0 0 8 
+Current score: 62210 (595 moves)
+18 0 0 9 
+Current score: 30902 (488 moves)
+18 0 0 10 
+Current score: 29824 (476 moves)
+18 0 0 11 
+Current score: 30712 (472 moves)
+18 0 0 12 
+font-size:100pt
+Current best:
+81304 (803) 
+ 48  12   6   1 
+  6 768 192   1 
+  1   1 1536  24 
+  6   1   1   1 
+
+81304 (803 moves)
+18 0 0 13 
+Current score: 27836 (416 moves)
+18 0 1 0 
+Current score: 27666 (420 moves)
+18 0 1 1 
+Current score: 28916 (446 moves)
+18 0 1 2 
+Current score: 66458 (656 moves)
+18 0 1 3 
+Current score: 27748 (421 moves)
+18 0 1 4 
+Current score: 61864 (578 moves)
+18 0 1 5 
+Current score: 69146 (743 moves)
+18 0 1 6 
+Current score: 30018 (472 moves)
+18 0 1 7 
+Current score: 29796 (475 moves)
+18 0 1 8 
+Current score: 27910 (421 moves)
+18 0 1 9 
+Current score: 66000 (634 moves)
+18 0 1 10 
+Current score: 61400 (544 moves)
+18 0 1 11 
+Current score: 27666 (420 moves)
+18 0 1 12 
+font-size:100pt
+Current best:
+86416 (899) 
+  2   6   2   2 
+ 12   2   2   2 
+ 24  96 384 1536 
+ 48 768  12   1 
+
+86416 (899 moves)
+18 0 1 13 
+Current score: 66036 (641 moves)
+18 0 2 0 
+Current score: 30756 (475 moves)
+18 0 2 1 
+Current score: 27504 (414 moves)
+18 0 2 2 
+Current score: 28968 (439 moves)
+18 0 2 3 
+Current score: 28564 (416 moves)
+18 0 2 4 
+Current score: 27748 (421 moves)
+18 0 2 5 
+Current score: 28626 (420 moves)
+18 0 2 6 
+Current score: 66790 (686 moves)
+18 0 2 7 
+Current score: 61424 (544 moves)
+18 0 2 8 
+Current score: 61876 (580 moves)
+18 0 2 9 
+Current score: 29702 (464 moves)
+18 0 2 10 
+Current score: 69146 (743 moves)
+18 0 2 11 
+Current score: 69162 (746 moves)
+18 0 2 12 
+Current score: 62104 (578 moves)
+18 0 2 13 
+Current best:
+86416 (899) 
+  2   6   2   2 
+ 12   2   2   2 
+ 24  96 384 1536 
+ 48 768  12   1 
+
+86416 (899 moves)
+18 0 1 13 
+Current score: 29796 (475 moves)
+18 0 3 0 
+Current score: 30018 (472 moves)
+18 0 3 1 
+Current score: 27666 (420 moves)
+18 0 3 2 
+Current score: 66034 (640 moves)
+18 0 3 3 
+Current score: 29034 (449 moves)
+18 0 3 4 
+Current score: 79374 (765 moves)
+18 0 3 5 
+Current score: 27748 (421 moves)
+18 0 3 6 
+Current score: 29824 (476 moves)
+18 0 3 7 
+Current score: 59628 (508 moves)
+18 0 3 8 
+Current score: 63748 (624 moves)
+18 0 3 9 
+Current score: 66790 (686 moves)
+18 0 3 10 
+Current score: 66034 (640 moves)
+18 0 3 11 
+Current score: 29786 (474 moves)
+18 0 3 12 
+Current score: 30010 (472 moves)
+18 0 3 13 
+Current best:
+86416 (899) 
+  2   6   2   2 
+ 12   2   2   2 
+ 24  96 384 1536 
+ 48 768  12   1 
+
+86416 (899 moves)
+18 0 1 13 
+Current score: 27596 (416 moves)
+18 0 4 0 
+Current score: 29698 (472 moves)
+18 0 4 1 
+Current score: 29698 (472 moves)
+18 0 4 2 
+Current score: 27744 (420 moves)
+18 0 4 3 
+Current score: 29702 (464 moves)
+18 0 4 4 
+Current score: 27666 (420 moves)
+18 0 4 5 
+Current score: 29274 (449 moves)
+18 0 4 6 
+Current score: 66016 (637 moves)
+18 0 4 7 
+Current score: 29786 (474 moves)
+18 0 4 8 
+Current score: 66874 (688 moves)
+18 0 4 9 
+Current score: 61540 (552 moves)
+18 0 4 10 
+Current score: 28818 (428 moves)
+18 0 4 11 
+Current score: 28564 (416 moves)
+18 0 4 12 
+Current score: 27666 (420 moves)
+18 0 4 13 
+Current best:
+86416 (899) 
+  2   6   2   2 
+ 12   2   2   2 
+ 24  96 384 1536 
+ 48 768  12   1 
+
+86416 (899 moves)
+18 0 1 13 
+Current score: 62110 (580 moves)
+18 0 5 0 

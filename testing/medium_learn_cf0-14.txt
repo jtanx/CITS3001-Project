@@ -1,0 +1,30 @@
+Current score: 29796 (475 moves)
+18 0 1 14 
+Current score: 61462 (552 moves)
+18 0 1 15 
+Current score: 30040 (476 moves)
+18 0 1 16 
+Current best:
+61462 (552) 
+  1   6   1   6 
+  1   1  12   3 
+ 24 1536   1  24 
+  1 192   1   6 
+
+61462 (552 moves)
+18 0 1 15 
+Current score: 67086 (680 moves)
+18 0 2 14 
+Current score: 27666 (420 moves)
+18 0 2 15 
+Current score: 69392 (745 moves)
+18 0 2 16 
+Current best:
+69392 (745) 
+  3   2   6   2 
+  2   2   2   3 
+  6 192 384  96 
+ 12  96 1536  24 
+
+69392 (745 moves)
+18 0 2 16 

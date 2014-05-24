@@ -149,7 +149,7 @@ public class Threes {
     //if (true) return;
     long tim = System.nanoTime();
     Board bs = solver.solve_mdfs(s, new Board(bt));
-    //Board bs = ida.solve_mdfs(s, new Board(bt));
+    //Board bs = solver.solve_idfs(s, new Board(bt));
     tim = System.nanoTime() - tim;
     System.out.println(bs);
     System.out.printf("%d, %d, %d, %d, %d\n",

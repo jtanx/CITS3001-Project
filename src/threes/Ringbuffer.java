@@ -30,11 +30,9 @@ public class Ringbuffer<T> {
   public T pop() {
     if (!buf.isEmpty()) {
       T ret = buf.peekFirst();
-      if (buf.size() > 1) {
-        buf.removeLast();
-      }
+      buf.clear();
       return ret;
     }
-    return null;
+    throw new IllegalStateException("Can't pop an empty ringbuffer");
   }
 }

@@ -12,21 +12,18 @@ public class Solver {
   private Board fbest = null;
   private int fbest_score = -1;
   
-  private final int[] factors = {18,2,2,9}; //The best
-  private final int[] lb1factors = {18,6,2,0}; //For trying to continue lb1
+  private final int[] factors = {18,2,2,9}; //The best all-rounder
   private final int[] lb3factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails for lb3
-  
-  private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot
-  //private int[] closefactors = {18, 5, 10, 10}; //nc1 559 569 5610 - oh jackpot
-  //private int[] closefactors = {18, 5, 11, 9}; //nc1 559 569 5610 - oh jackpot
-  //private int[] closefactors = {18, 7,8,11}; //Oh jackpot, but not for lb2
-  //private int[] closefactors = {18, 7,9,11}; //Oh jackpot, but not for lb2
-  //private int[] closefactors = {18, 7,9,12}; //Oh jackpot, but not for lb2
-  //18,4,7,9 for nc1
-  
-  
-  private int[] currentfactors = factors;
-  private final int[][] choicefactors = {factors, lb3factors, lb1factors};
+  private final int[] lb1factorsb = {18,2,1,8}; //Continuation of longboard1 but with backtrack 6.
+  //private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
+  private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
+  private final int[] lowfactors2 = {18,2,6,4}; //medium-1b board
+  private final int[] lowfactors3 = {18,1,0,1}; 
+  private final int[] medfactors = {18,1,3,10}; //Medium-2 board
+  // final int[] medfactors = {18,2,4,14}; //Medium-2 board 566
+  private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot  
+  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, medfactors, lowfactors, lowfactors3};
+  private int[] currentfactors = choicefactors[0];
   
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
@@ -57,9 +54,9 @@ public class Solver {
       Board best_board = null;
       
       for (int i = 18; i < 19; i++) {
-          for (int j = 0; j < 19; j++) {
-              for (int k = 0; k < 14; k++) {
-                for (int l = 0; l < 14; l++) {
+          for (int j = 1; j < 19; j++) {
+              for (int k = 0; k < 8; k++) {
+                for (int l = 0; l < 17; l++) {
                     fl[0] = i; fl[1] = j;
                     fl[2] = k; fl[3] = l; 
 
@@ -154,7 +151,7 @@ public class Solver {
   }
   
   public Board solve_mdfs(int[] s, Board b) {
-    Ringbuffer<Board> rb = new Ringbuffer<Board>(3);
+    Ringbuffer<Board> rb = new Ringbuffer<Board>(6);
     Board current = b, choke_best = null;
     char p = 0, fc = 0, foff = 0;
     
@@ -170,8 +167,12 @@ public class Solver {
                 fbest.score(), fbest.nMoves());
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
-        foff = 0;
-        currentfactors = choicefactors[0];
+        //Maybe not, but some factors shouldn't be used for extended periods of time.
+        if ((fc + foff) % choicefactors.length > 3) {
+          foff = 0;
+          fc = 0;
+          currentfactors = choicefactors[0];
+        }
       }
       
       if (current != null) {
