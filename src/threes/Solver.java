@@ -11,6 +11,8 @@ public class Solver {
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private Board fbest = null;
   private int fbest_score = -1;
+  private final boolean verbose;
+  private final int[] learning_starts = {18,0,0,0};
   
   private final int[] factors = {18,2,2,9}; //The best all-rounder
   private final int[] lb3factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails for lb3
@@ -25,19 +27,34 @@ public class Solver {
   private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, medfactors, lowfactors, lowfactors3};
   private int[] currentfactors = choicefactors[0];
   
+  public Solver(boolean verbose, int[] learning_startfactors) {
+    this.verbose = verbose;
+    if (learning_startfactors != null) {
+      if (learning_startfactors.length != learning_starts.length) {
+        throw new IllegalArgumentException("Invalid learning factor size");
+      }
+      System.arraycopy(learning_startfactors, 0, 
+              learning_starts, 0, learning_starts.length);
+    }
+  }
+  
+  public Solver(boolean verbose) {
+    this(verbose, null);
+  }
+  
+  public Solver() {
+    this(false, null);
+  }
+  
   //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
   //Possible change to ncombinable: Weight combinables that increase the score significantly
   private int evaluate(Board b, int[] s) {
     int[] thefactors = currentfactors;
-    if (b.dof() != b.dof2()) { //DOF is faster than DOF2. This is now just for checking
-      throw new RuntimeException("WTF");
-    }
     
-    //if (false) {
     //We are close to the end of the sequence! Use different weights!
     if (b.nMoves() + MAX_DEPTH * 2 >= s.length) {
-      //System.out.println(b.nMoves());
+      //System.err.println(b.nMoves());
       thefactors = closefactors;
     }
     return ((int)Math.pow(4, b.dof())) + 
@@ -53,10 +70,10 @@ public class Solver {
       int best_score = -1;
       Board best_board = null;
       
-      for (int i = 18; i < 19; i++) {
-          for (int j = 1; j < 19; j++) {
-              for (int k = 0; k < 8; k++) {
-                for (int l = 0; l < 17; l++) {
+      for (int i = learning_starts[0]; i < 19; i++) {
+          for (int j = learning_starts[1]; j < 19; j++) {
+              for (int k = learning_starts[2]; k < 8; k++) {
+                for (int l = learning_starts[3]; l < 17; l++) {
                     fl[0] = i; fl[1] = j;
                     fl[2] = k; fl[3] = l; 
 
@@ -151,9 +168,9 @@ public class Solver {
   }
   
   public Board solve_mdfs(int[] s, Board b) {
-    Ringbuffer<Board> rb = new Ringbuffer<Board>(6);
+    Ringbuffer<Board> rb = new Ringbuffer<>(6);
     Board current = b, choke_best = null;
-    char p = 0, fc = 0, foff = 0;
+    char fc = 0, foff = 0;
     
     fbest_score = -1;
     fbest = null;
@@ -162,9 +179,11 @@ public class Solver {
       current = solve_dfs(s, MAX_DEPTH, current, 0);
       
       if (choke_best != null && choke_best != fbest) {
-        System.out.printf("Recovery!: %d(%d) --> %d(%d)\n",
-                choke_best.score(), choke_best.nMoves(),
-                fbest.score(), fbest.nMoves());
+        if (verbose) {
+          System.err.printf("Recovery!: %d(%d) --> %d(%d)\n",
+                  choke_best.score(), choke_best.nMoves(),
+                  fbest.score(), fbest.nMoves());
+        }
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
@@ -176,7 +195,9 @@ public class Solver {
       }
       
       if (current != null) {
-        System.out.println(current);
+        if (verbose) {
+          System.err.println(current);
+        }
       } else if (fbest != null && fbest.nMoves() < s.length) {
         current = rb.pop();
         
@@ -185,20 +206,26 @@ public class Solver {
           foff = (char)((foff + 1) % choicefactors.length);
           fc = 0;
           currentfactors = choicefactors[foff];
-          System.out.println("Dead-end, back-tracking two steps and trying with different weights!");
-          System.out.printf("Starting index: %d (current score %d/%d)\n",
-                  (int)foff, current.score(), current.nMoves());
+          if (verbose) {
+            System.err.println("Dead-end, back-tracking two steps and trying with different weights!");
+            System.err.printf("Starting index: %d (current score %d/%d)\n",
+                    (int)foff, current.score(), current.nMoves());
+          }
         } else if (fc < choicefactors.length) {
           currentfactors = choicefactors[(++fc + foff) % choicefactors.length];
-          System.out.printf("No improvement, trying factor index %d...\n",
-                  (fc + foff) % choicefactors.length);
+          if (verbose) {
+            System.err.printf("No improvement, trying factor index %d...\n",
+                    (fc + foff) % choicefactors.length);
+          }
         } else {
           current = null;
-          System.out.println("Factor exhaustion");
+          if (verbose) {
+            System.err.println("Factor exhaustion");
+          }
         }
       }
     }
-    
+   
     return fbest == null ? b : fbest;
   }
   

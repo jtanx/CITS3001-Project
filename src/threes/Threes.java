@@ -13,9 +13,16 @@ import threes.Board.Direction;
  */
 public class Threes {
 
-  private static int[] parseFile(String file, int[] b) throws IOException {
+  /**
+   * Parses an input board and tile sequence.
+   * @param file The path to the file
+   * @param b The array in which to store the board tiles
+   * @return The tile sequence
+   * @throws IOException Garbage in Garbage out
+   */
+  private static int[] parseBoard(String file, int[] b) throws IOException {
     BufferedReader br = null;
-    ArrayList<Integer> sequence = new ArrayList<Integer>();
+    ArrayList<Integer> sequence = new ArrayList<>();
     int[] result;
     
     if (b.length != Board.BOARD_SPACE) {
@@ -76,9 +83,15 @@ public class Threes {
     return result;
   }
   
+  /**
+   * Parses a moves file
+   * @param file The path to the moves file
+   * @return A list of directions as dictated by the moves file
+   * @throws IOException 
+   */
   private static List<Direction> parseMoves(String file) throws IOException {
     BufferedReader br = null;
-    List<Direction> moves = new ArrayList<Direction>();
+    List<Direction> moves = new ArrayList<>();
     
     try {
       String c;
@@ -98,29 +111,109 @@ public class Threes {
     return moves;
   }
   
+  private static int parseArgs(String[] args, int pos, Settings settings) {
+    int cp = pos;
+    int length = args[cp].length();
+    
+    for (int i = 1; i < length; i++) {
+      switch(args[cp].charAt(i)) {
+        case 'v':
+          settings.verbose = !settings.verbose;
+          break;
+          
+        case 'n':
+          settings.noBacktrack = !settings.noBacktrack;
+          break;
+          
+        case 'o':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.outputFile = args[++pos];
+          break;
+          
+        case 'm':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.movesFile = args[++pos];
+          break;
+          
+        case 'l':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          String[] nums = args[++pos].split(",");
+          settings.starting_learnfactors = new int[nums.length];
+          for (int k = 0; k < nums.length; k++) {
+            settings.starting_learnfactors[k] = Integer.parseInt(nums[k]);
+          }
+          break;
+          
+        default:
+          return -1;
+      }
+    }
+    
+    return pos;
+  }
+  
+  public static void usage() {
+    System.out.println("CITS3001 Threes solver - 2014");
+    System.out.println("Usage: threes [-vn -l <i,j,k,l> -o <output_file> -m <moves_file>] input_file");
+    System.out.println("Options:");
+    System.out.println("  -v Enables verbose output to stderr.");
+    System.out.println("  -n Disables backtracking.");
+    System.out.println("  -l <i,j,k,l> (Manual) learning mode.");
+    System.out.println("  -o <output_file> Writes the moves to the specified file.");
+    System.out.println("  -m <moves_file> Reads in a moves file to play the board with (benchmarking purposes).");
+    System.out.println();
+    System.out.println("The output moves will always be printed to stdout.");
+    System.out.println("Specifying a moves file with '-m' takes precedence over solving.");
+  }
+  
   /**
    * @param args the command line arguments
    */
   public static void main(String[] args) {
+    Settings settings = new Settings();
     int[] bt = new int[Board.BOARD_SPACE], s;
-    if (args.length < 1){
-      System.out.println("Usage: threes file_in.txt");
+    
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].startsWith("-")) {
+        int j = parseArgs(args, i, settings);
+        if (j < 0) {
+          System.err.println("Invalid value: " + args[i]);
+          usage();
+          return;
+        } else {
+          i = j;
+        }
+      } else {
+        settings.inputBoard = args[i];
+      }
+    }
+    
+    if (settings.inputBoard == null) {
+      System.err.println("No input board file specified.");
+      usage();
       return;
     }
     
     try {
-      s = parseFile(args[0], bt);
+      s = parseBoard(settings.inputBoard, bt);
     } catch (IOException e) {
-      System.out.printf("Invalid file %s: %s\n", args[0], e.getMessage());
+      System.err.printf("Invalid file %s: %s\n", 
+              settings.inputBoard, e.getMessage());
       return;
     }
     
-    if (args.length == 2) {
+    if (settings.movesFile != null) {
       List<Direction> moves;
       try {
-        moves = parseMoves(args[1]);
+        moves = parseMoves(settings.movesFile);
       } catch (IOException e) {
-        System.out.printf("Invalid input moves file %s: %s\n",
+        System.err.printf("Invalid input moves file %s: %s\n",
                 args[1], e.getMessage());
         return;
       }
@@ -143,23 +236,38 @@ public class Threes {
       return;
     }
     
-    Solver solver = new Solver();
-    //solver.learn_factors(new Board(bt), s, false);
-    //solver.learn_factors(new Board(bt), s, true);
-    //if (true) return;
-    long tim = System.nanoTime();
-    Board bs = solver.solve_mdfs(s, new Board(bt));
-    //Board bs = solver.solve_idfs(s, new Board(bt));
-    tim = System.nanoTime() - tim;
-    System.out.println(bs);
-    System.out.printf("%d, %d, %d, %d, %d\n",
-                      bs.score(), bs.dof(), 
-                      bs.zeros(), bs.checkerboarding2(),
-                      bs.smoothness());
+    Solver solver = new Solver(settings.verbose, settings.starting_learnfactors);
+    if (settings.starting_learnfactors != null) {
+      System.out.println("Learning factors...");
+      solver.learn_factors(new Board(bt), s, false);
+      return;
+    }
+
+    Board bs;
+    long runtime = System.nanoTime();
+    if (settings.noBacktrack) {
+      bs = solver.solve_idfs(s, new Board(bt));
+    } else {
+      bs = solver.solve_mdfs(s, new Board(bt));
+    }
+    runtime = System.nanoTime() - runtime;
+    if (settings.verbose) {
+      System.err.println(bs);
+    }
+    System.out.printf("%d, %d, %d, %d, %d, %d\n",
+                  bs.score(), bs.dof(), 
+                  bs.zeros(), bs.checkerboarding3(),
+                  bs.smoothness(), bs.nCombinable());
     System.out.printf("Used %d/%d available moves in %.2f seconds. (%.2f m/s)\n", 
                       bs.moves().length(), s.length, 
-                      tim / 1000000000.0,
-                      bs.moves().length() / (tim / 1000000000.0));
+                      runtime / 1000000000.0,
+                      bs.moves().length() / (runtime / 1000000000.0));
     System.out.println(bs.moves());
+  }
+  
+  private static class Settings {
+    String inputBoard, outputFile, movesFile;
+    int[] starting_learnfactors;
+    boolean verbose, noBacktrack;
   }
 }
