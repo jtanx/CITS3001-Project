@@ -5,7 +5,8 @@ import threes.Board.Direction;
 import static threes.Threes.log_info;
 
 /**
- *
+ * Separating the AI from the game mechanics
+ * 'Solves' the game using a depth-limited depth first search.
  * @author
  */
 public class Solver {
@@ -20,13 +21,9 @@ public class Solver {
   private final int[] lb1factorsb = {18,2,1,8}; //Continuation of longboard1 but with backtrack 6.
   private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
   private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
-  private final int[] lowfactors2 = {18,2,6,4}; //medium-1b board
   private final int[] lowfactors3 = {18,1,0,1}; 
-  private final int[] medfactors = {18,1,3,10}; //Medium-2 board
-  //private final int[] medfactors = {18,2,4,14}; //Medium-2 board 566
   private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot  
-  //private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors}; //gets near 7 million for lb3
-  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors, lowfactors3}; //, lowfactors3
+  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors, lowfactors3};
   private int[] currentfactors = choicefactors[0];
   
   public Solver(int[] learning_startfactors) {
@@ -44,7 +41,6 @@ public class Solver {
     this(null);
   }
   
-  //TODO:
   //Edge case: As we're approaching the end of a sequence, try to maximise score...
   //Possible change to ncombinable: Weight combinables that increase the score significantly
   private int evaluate(Board b, int[] s) {
@@ -62,6 +58,17 @@ public class Solver {
            thefactors[3] * b.nCombinable();
   }
   
+  /**
+   * 'Learns' the factors that are good.
+   * More of, just iterate over all possible heuristic weight combinations
+   * and you have to observe which ones are good.
+   * 
+   * This learning does not utilise backtracking - it sticks to using one
+   * weight only.
+   * @param b The board to learn against
+   * @param s The tile sequence to be used
+   * @param learnClose Whether we are learning for the 'close' weight factors or not.
+   */
   public void learn_factors(Board b, int[] s, boolean learnClose) {
       int[] fl = learnClose ? closefactors : factors;
       int[] best = new int[fl.length];
@@ -184,6 +191,9 @@ public class Solver {
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
         if (fc > 3) {
+          log_info("Volatile weights were used; switching back to %s",
+                  Arrays.toString(choicefactors[0]));
+          fc = 0;
           currentfactors = choicefactors[0];
         }
       }

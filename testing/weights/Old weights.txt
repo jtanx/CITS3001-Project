@@ -26,3 +26,7 @@
   //private final int[] lb1factorsa = {18,1,2,5};
   //private final int[] lb1factors = {18,6,2,0}; //For trying to continue lb1 but only with 3 moves available backtrack
   
+
+  private final int[] medfactors = {18,1,3,10}; //Medium-2 board
+  //private final int[] medfactors = {18,2,4,14}; //Medium-2 board 566
+  private final int[] lowfactors2 = {18,2,6,4}; //medium-1b board
