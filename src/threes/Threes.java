@@ -19,7 +19,7 @@ public class Threes {
   
   public static void log_info(Object o) {
     if (verbose) {
-      System.out.println(o);
+      System.err.println(o);
     }
   }
   public static void log_info(String fmt, Object... args) {
@@ -265,7 +265,7 @@ public class Threes {
     Board bs;
     long runtime = System.nanoTime();
     if (settings.noBacktrack) {
-      bs = solver.solve_idfs(s, new Board(bt));
+      bs = solver.solve_ldfs(s, new Board(bt));
     } else {
       bs = solver.solve_mdfs(s, new Board(bt));
     }

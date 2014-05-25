@@ -1,0 +1,8 @@
+A board that cannot be moved
+
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+
+1 2 1 2 1 2 1 2

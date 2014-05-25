@@ -1,5 +1,6 @@
 package threes;
 
+import java.util.Arrays;
 import threes.Board.Direction;
 import static threes.Threes.log_info;
 
@@ -17,17 +18,19 @@ public class Solver {
   private final int[] factors = {18,2,2,9}; //The best all-rounder
   private final int[] lb3factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails for lb3
   private final int[] lb1factorsb = {18,2,1,8}; //Continuation of longboard1 but with backtrack 6.
-  //private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
+  private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
   private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
   private final int[] lowfactors2 = {18,2,6,4}; //medium-1b board
   private final int[] lowfactors3 = {18,1,0,1}; 
   private final int[] medfactors = {18,1,3,10}; //Medium-2 board
-  // final int[] medfactors = {18,2,4,14}; //Medium-2 board 566
+  //private final int[] medfactors = {18,2,4,14}; //Medium-2 board 566
   private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot  
-  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, medfactors, lowfactors, lowfactors3};
+  //private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors}; //gets near 7 million for lb3
+  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors, lowfactors3}; //, lowfactors3
   private int[] currentfactors = choicefactors[0];
   
   public Solver(int[] learning_startfactors) {
+    log_info("Heuristic weights: %s", Arrays.deepToString(choicefactors));
     if (learning_startfactors != null) {
       if (learning_startfactors.length != learning_starts.length) {
         throw new IllegalArgumentException("Invalid learning factor size");
@@ -72,7 +75,7 @@ public class Solver {
                     fl[0] = i; fl[1] = j;
                     fl[2] = k; fl[3] = l; 
 
-                    Board n = solve_idfs(s, b);
+                    Board n = solve_ldfs(s, b);
                     int score = n.score();
                     if (score > best_score) {
                         System.arraycopy(factors, 0, best, 0, best.length);
@@ -142,7 +145,7 @@ public class Solver {
     return best;
   }
   
-  public Board solve_idfs(int[] s, Board b) {
+  public Board solve_ldfs(int[] s, Board b) {
     Board input = b;
     fbest_score = -1;
     fbest = null;
@@ -153,8 +156,6 @@ public class Solver {
         //System.out.println(b);
         //System.out.println(b.score());
         //System.out.println(b.nMoves());
-        //Thought: What if we stored say the past 5 such moves,
-        //And if we hit a dead end, we backtrack and use another heuristic????
       }
     }
     
@@ -174,15 +175,15 @@ public class Solver {
       current = solve_dfs(s, MAX_DEPTH, current, 0);
       
       if (choke_best != null && choke_best != fbest) {
-        log_info("Recovery!: %d(%d) --> %d(%d)",
+        log_info("Recovery!: [%d:%s] %d(%d) --> %d(%d)",
+                  (int)fc,
+                  Arrays.toString(currentfactors),
                   choke_best.score(), choke_best.nMoves(),
                   fbest.score(), fbest.nMoves());
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
-        if ((fc + foff) % choicefactors.length > 3) {
-          foff = 0;
-          fc = 0;
+        if (fc > 3) {
           currentfactors = choicefactors[0];
         }
       }
@@ -194,16 +195,16 @@ public class Solver {
         
         if (choke_best != fbest) {
           choke_best = fbest;
-          foff = (char)((foff + 1) % choicefactors.length);
-          fc = 0;
-          currentfactors = choicefactors[foff];
+          foff = 1;
+          fc = (char)((fc + 1) % choicefactors.length);
+          currentfactors = choicefactors[fc];
           log_info("Dead-end, back-tracking two steps and trying with different weights!");
           log_info("Starting index: %d (current score %d/%d)",
-                    (int)foff, current.score(), current.nMoves());
-        } else if (fc < choicefactors.length) {
-          currentfactors = choicefactors[(++fc + foff) % choicefactors.length];
-          log_info("No improvement, trying factor index %d...",
-                   (fc + foff) % choicefactors.length);
+                    (int)fc, current.score(), current.nMoves());
+        } else if (foff++ < choicefactors.length - 1) {
+          fc = (char)((fc + 1) % choicefactors.length);
+          currentfactors = choicefactors[fc];
+          log_info("No improvement, trying factor index %d...", (int)fc);
         } else {
           current = null;
           log_info("Factor exhaustion");
