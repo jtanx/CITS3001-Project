@@ -175,19 +175,25 @@ In general, it was found that the degrees of freedom at any board state did not 
 %-------------------------Candidate solutions----------------------
 
 \section{Candidate methods to solving the modified version of \threes{}}
-The fact that the modified game is deterministic heavily influenced the strategies considered for `solving' the game. As a result of the determinism, the game tree can theoretically be completely generated, effectively brute-forcing a solution by considering all possible board states.
+The fact that the modified game is deterministic heavily influenced the strategies considered for `solving' the game. As a result of the determinism, the game tree can theoretically be completely generated, using any common search strategy. This effectively brute-forces a solution by considering all possible board states. 
 
-The only show-stopper to a brute-forced solution is that \threes{} has a branching factor of 4, since you can move in up to 4 directions (left, up, right, down). This makes a complete expansion of the game tree unfeasible, particularly for games with long tile sequences --- it is not uncommon to have a game that runs for in excess of 2000 moves. A complete search to that depth requires about 10\ts{1204} nodes to be expanded; even at an expansion rate of 1ns/node, it would still take 10\ts{1195} seconds, or about 10\ts{1187} years.  
+The only show-stopper to a brute-forced solution is that \threes{} has a branching factor of 4, since you can move in up to 4 directions (left, up, right, down). This makes a complete expansion of the game tree unfeasible, particularly for games with long tile sequences --- it is not uncommon to have a game that runs for in excess of 1000 moves. A complete search to that depth requires about 10\ts{602} nodes to be expanded; even at an expansion rate of 1ns/node, it would still take 10\ts{593} seconds, or about 10\ts{585} years.  
 
-In reality, the absolute maximum lookahead that can be reasonably achieved is to around a depth of 14. Assuming that one board takes 64 bytes (16 x 4 byte unsigned integers), a complete breadth-first search would require 17.18GB, which while feasible with present day consumer-grade hardware, is quite near the limit. 
+In reality, the maximum lookahead that can be reasonably achieved is to around a depth of 14, as required to achieve the solving speed of about 5--10 moves per second. It is possible that a greater lookahead could be achieved with the use of some form of pruning, hence preventing the expansion of nodes that are unlikely to lead to a good outcome.
 
-Informed search strategies, such as A* were also considered to be possible, and would be highly desirable over uninformed search strategies, given that with the right heuristics, a good solution is likely to be found sooner. However, it is debatable whether or not a useful \emph{admissible} heuristic exists for this game. 
+Informed search strategies, such as A* were also considered to be possible, and would be desirable over uninformed search strategies, given that with the right heuristics, a good solution is likely to be found sooner. However, it is debatable whether or not an \emph{admissible} heuristic exists for this game. 
 
 For both informed and uninformed search strategies, versions with more restricted memory usage (e.g. IDFS, SMA*, IDA*) could be used to overcome concerns over excessive memory usage.
 
 \chapter{Implementation details}
+The final implementation uses a depth-limited depth first search to examine possible board states from the current position. The leaf nodes are then evaluated using a linear weighted combination of heuristics, where the path from the root to the node with the best evaluation is chosen as the sequence of moves that should be made. This procedure is then repeated until a termination condition is reached, such as exhausting the sequence of moves, or reaching a board state where no further moves are possible. At present, the depth limit has been fixed to a depth of 8, such that it will run at a decent speed.
 
-\chapter{System analysis}
+Although this method does not guarantee that \emph{the} optimal solution to be found, it does usually find \emph{a} good solution. To further its solving abilities, a measure of backtracking was also introduced, allowing it to go back to a board state from a specified number of iterations prior, which can be re-evaluated. The re-evaluation technique used was to simply vary the weights used for the heuristics, which was found to be different depending on the board conditions.
+
+In testing, it is typical for this approach to solve to at least 1000 moves, but this is notwithstanding boards where it is particularly difficult to select good moves. In cases where the tile sequence is unfavourable, it may be found that it will solve no more than 200 moves. Such boards are ones where there is a very high proportion of low valued (1 or 2) tiles in sequences which makes them uncombinable. The presence of such uncombinable tiles severely limits the performance of the solver, as they quickly fill the board yet do not significantly contribute to its score.
+
+However, on boards where the tile sequence is favourable (easily combinable), it has been shown that this solver can continue for many thousands of moves quite easily. This would suggest that this approach is very good at handling and managing boards where tile sequences are easily combinable, but it breaks down when it has to handle cases where there may be many uncombinable tiles at  any one stage. It should be noted that any agent will not perform well if a long sequence of uncombinable tiles occurs. 
+
 
 \chapter{Consideration of alternative solutions}
 
