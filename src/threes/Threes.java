@@ -3,7 +3,10 @@ package threes;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Formatter;
 import java.util.List;
 import threes.Board.Direction;
 
@@ -12,7 +15,21 @@ import threes.Board.Direction;
  * @author
  */
 public class Threes {
-
+  private static boolean verbose;
+  
+  public static void log_info(Object o) {
+    if (verbose) {
+      System.out.println(o);
+    }
+  }
+  public static void log_info(String fmt, Object... args) {
+    if (verbose) {
+      Formatter f = new Formatter();
+      f.format(fmt, args);
+      System.err.println(f);
+    }
+  }
+  
   /**
    * Parses an input board and tile sequence.
    * @param file The path to the file
@@ -118,7 +135,7 @@ public class Threes {
     for (int i = 1; i < length; i++) {
       switch(args[cp].charAt(i)) {
         case 'v':
-          settings.verbose = !settings.verbose;
+          verbose = !verbose;
           break;
           
         case 'n':
@@ -236,9 +253,11 @@ public class Threes {
       return;
     }
     
-    Solver solver = new Solver(settings.verbose, settings.starting_learnfactors);
+    Solver solver = new Solver(settings.starting_learnfactors);
     if (settings.starting_learnfactors != null) {
       System.out.println("Learning factors...");
+      System.out.println("Starting with:" + 
+                         Arrays.toString(settings.starting_learnfactors));
       solver.learn_factors(new Board(bt), s, false);
       return;
     }
@@ -251,23 +270,41 @@ public class Threes {
       bs = solver.solve_mdfs(s, new Board(bt));
     }
     runtime = System.nanoTime() - runtime;
-    if (settings.verbose) {
-      System.err.println(bs);
-    }
-    System.out.printf("%d, %d, %d, %d, %d, %d\n",
+    
+    Formatter f = new Formatter();
+    f.format("%d, %d, %d, %d, %d, %d\n",
                   bs.score(), bs.dof(), 
                   bs.zeros(), bs.checkerboarding3(),
                   bs.smoothness(), bs.nCombinable());
-    System.out.printf("Used %d/%d available moves in %.2f seconds. (%.2f m/s)\n", 
+    f.format("Used %d/%d available moves in %.2f seconds. (%.2f m/s)\n", 
                       bs.moves().length(), s.length, 
                       runtime / 1000000000.0,
                       bs.moves().length() / (runtime / 1000000000.0));
-    System.out.println(bs.moves());
+    f.format(bs.moves());
+    f.format("\n");
+    
+    log_info(bs);
+    System.out.print(f.toString());
+    
+    if (settings.outputFile != null) {
+      PrintWriter writer = null;
+      try {
+        writer = new PrintWriter(settings.outputFile, "UTF-8");
+        writer.printf(f.toString());
+      } catch (IOException e) {
+        System.err.printf("Failed to write out to %s: %s\n", 
+                settings.outputFile, e.getMessage());
+      } finally {
+        if (writer != null) {
+          writer.close();
+        }
+      }
+    }
   }
   
   private static class Settings {
     String inputBoard, outputFile, movesFile;
     int[] starting_learnfactors;
-    boolean verbose, noBacktrack;
+    boolean noBacktrack;
   }
 }

@@ -1,6 +1,7 @@
 package threes;
 
 import threes.Board.Direction;
+import static threes.Threes.log_info;
 
 /**
  *
@@ -11,7 +12,6 @@ public class Solver {
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private Board fbest = null;
   private int fbest_score = -1;
-  private final boolean verbose;
   private final int[] learning_starts = {18,0,0,0};
   
   private final int[] factors = {18,2,2,9}; //The best all-rounder
@@ -27,8 +27,7 @@ public class Solver {
   private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, medfactors, lowfactors, lowfactors3};
   private int[] currentfactors = choicefactors[0];
   
-  public Solver(boolean verbose, int[] learning_startfactors) {
-    this.verbose = verbose;
+  public Solver(int[] learning_startfactors) {
     if (learning_startfactors != null) {
       if (learning_startfactors.length != learning_starts.length) {
         throw new IllegalArgumentException("Invalid learning factor size");
@@ -38,12 +37,8 @@ public class Solver {
     }
   }
   
-  public Solver(boolean verbose) {
-    this(verbose, null);
-  }
-  
   public Solver() {
-    this(false, null);
+    this(null);
   }
   
   //TODO:
@@ -179,11 +174,9 @@ public class Solver {
       current = solve_dfs(s, MAX_DEPTH, current, 0);
       
       if (choke_best != null && choke_best != fbest) {
-        if (verbose) {
-          System.err.printf("Recovery!: %d(%d) --> %d(%d)\n",
+        log_info("Recovery!: %d(%d) --> %d(%d)",
                   choke_best.score(), choke_best.nMoves(),
                   fbest.score(), fbest.nMoves());
-        }
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
@@ -195,9 +188,7 @@ public class Solver {
       }
       
       if (current != null) {
-        if (verbose) {
-          System.err.println(current);
-        }
+        log_info(current);
       } else if (fbest != null && fbest.nMoves() < s.length) {
         current = rb.pop();
         
@@ -206,22 +197,16 @@ public class Solver {
           foff = (char)((foff + 1) % choicefactors.length);
           fc = 0;
           currentfactors = choicefactors[foff];
-          if (verbose) {
-            System.err.println("Dead-end, back-tracking two steps and trying with different weights!");
-            System.err.printf("Starting index: %d (current score %d/%d)\n",
+          log_info("Dead-end, back-tracking two steps and trying with different weights!");
+          log_info("Starting index: %d (current score %d/%d)",
                     (int)foff, current.score(), current.nMoves());
-          }
         } else if (fc < choicefactors.length) {
           currentfactors = choicefactors[(++fc + foff) % choicefactors.length];
-          if (verbose) {
-            System.err.printf("No improvement, trying factor index %d...\n",
-                    (fc + foff) % choicefactors.length);
-          }
+          log_info("No improvement, trying factor index %d...",
+                   (fc + foff) % choicefactors.length);
         } else {
           current = null;
-          if (verbose) {
-            System.err.println("Factor exhaustion");
-          }
+          log_info("Factor exhaustion");
         }
       }
     }

@@ -2,10 +2,11 @@
 package threes;
 
 import java.util.LinkedList;
-import java.util.List;
 
 /**
- *
+ * Buffers the previous n moves made.
+ * When retrieving from the buffer, the furthest move made is returned
+ * and the buffer is cleared.
  * @author
  */
 public class Ringbuffer<T> {
@@ -17,7 +18,7 @@ public class Ringbuffer<T> {
       throw new IllegalArgumentException("Must have a size greater than 0.");
     }
     this.maxSize = maxSize;
-    buf = new LinkedList<T>();
+    buf = new LinkedList<>();
   }
   
   public void push(T it) {
