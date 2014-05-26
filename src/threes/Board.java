@@ -6,8 +6,8 @@ import java.util.Formatter;
 import java.util.List;
 
 /**
- *
- * @author
+ * Game mechanics of our version of Threes!
+ * @author Jeremy Tan, 20933708
  */
 public class Board {
   public static final int BOARD_WIDTH = 4;
@@ -46,13 +46,14 @@ public class Board {
     }
     
     public static List<Direction> parse(String s) {
-      List<Direction> m = new ArrayList<Direction>();
+      List<Direction> m = new ArrayList<>();
       parse(m, s);
       
       return m;
     }
   };
   
+  /** The board (flat representation) */
   private int[] it;
   private int c_sequence;
   private boolean finished;
@@ -88,6 +89,14 @@ public class Board {
     return v >= 0 && v < 3 || (v % 3 == 0 && is_pow2(v/3));
   }
   
+  /**
+   * Calculates the 'insert mask' which helps to determine where to insert
+   * the next tile into.
+   * @param seq_rows A bitfield indicating which rows were shifted
+   * @param seq_trn The transformation lookup to be used when searching.
+   * @return A bitfield of shifted rows that have the lowest 
+   *         lexicographical score.
+  */
   private char insert_mask(char seq_rows, char seq_trn[]) {
     char i, j;
     //If seq_rows is a power of 2, then only one row left -> sub into that row immediately.
@@ -111,13 +120,19 @@ public class Board {
   
   public int nMoves() {
     assert(path.length() == c_sequence);
-    return path.length();
+    return c_sequence;
   }
   
   public String moves() {
     return path.toString();
   }
   
+  /**
+   * Performs the move in the desired direction.
+   * @param s The tile sequence
+   * @param d The direction to move in
+   * @return true iff a move occurred.
+   */
   public boolean move(int[] s, Direction d) {
     boolean local_shift = false, insert_last;
     char seq_rows = 0;
@@ -177,6 +192,14 @@ public class Board {
     return true;
   }
   
+  /**
+   * Moves the board according to a string of moves.
+   * @param s The tile sequence
+   * @param moveSequence The sequence of moves to make. Characters in the
+   *                     set of (L,U,R,D) (case insensitive) will cause 
+   *                     a move to be made.
+   * @return Whether or not the last move made actually was successful.
+   */
   public boolean move(int[] s, String moveSequence) {
     List<Direction> moves = Direction.parse(moveSequence);
     boolean ret = false;
@@ -212,7 +235,7 @@ public class Board {
   
   /**
    * Where's my detuning frequency...
-   * @return 
+   * @return The number of directions the board can be moved in
    */
   public int dof() {
     char can_shift = 0;
@@ -237,6 +260,10 @@ public class Board {
            ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
   }
   
+  /**
+   * Counts the number of locally combinable tiles
+   * @return Combinable tile count
+   */
   public int nCombinable() {
     int nCombinable = 0;
     for (char i = 0; i < BOARD_WIDTH; i++) {
@@ -261,10 +288,19 @@ public class Board {
     return nCombinable;
   }
   
+  /**
+   * Are we in a finished board state? E.g tile sequence exhausted or 
+   * no further move in any direction is possible
+   * @return board == finished
+   */
   public boolean finished() {
     return finished;
   }
   
+  /**
+   * Counts the number of empty tiles on the board
+   * @return The number of empty tiles
+   */
   public int zeros() {
     int n_z = 0;
     for (int i = 0; i < BOARD_SPACE; i++)
@@ -277,6 +313,13 @@ public class Board {
     return v < 0 ? -1 : v > 0 ? 1 : 0;
   }
   
+  /**
+   * Determines the 'checkerboarding' of a board.
+   * It counts how many times the sign changes along a row/column,
+   * and when it detects such a change, the 'checkerboarding' is 
+   * calculated from the difference in elevation between the tiles.
+   * @return The checkerboarding factor. A negative number.
+   */
   public int checkerboarding3() {
     int checkerboarding = 0;
     
@@ -310,10 +353,20 @@ public class Board {
     return -checkerboarding;
   }
   
+  /**
+   * Determines the 'elevation' of a tile, in log space.
+   * @param v The tile score
+   * @return The elevation of the tile.
+   */
   private int elevation(int v) {
     return (int)((v/3) <= 0 ? 0 : Math.log(v/3) / Math.log(2));
   }
   
+  /**
+   * Determines how 'smooth' the board is.
+   * Idea courtesy of 2048-AI: https://github.com/ov3y/2048-AI
+   * @return The board smoothness.
+   */
   public int smoothness() {
     int smoothness = 0;
     for (int i = 0; i < BOARD_WIDTH - 1; i++) {

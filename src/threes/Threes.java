@@ -11,8 +11,8 @@ import java.util.List;
 import threes.Board.Direction;
 
 /**
- *
- * @author
+ * This project requires JRE version >= 7.
+ * @author Jeremy Tan, 20933708
  */
 public class Threes {
   private static boolean verbose;

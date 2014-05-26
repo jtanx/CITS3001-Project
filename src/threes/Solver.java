@@ -14,7 +14,7 @@ import static threes.Threes.log_info;
 /**
  * Separating the AI from the game mechanics
  * 'Solves' the game using a depth-limited depth first search.
- * @author
+ * @author Jeremy Tan, 20933708
  */
 public class Solver {
   private static final int MAX_DEPTH = 8;
