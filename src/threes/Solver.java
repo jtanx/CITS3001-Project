@@ -163,6 +163,12 @@ public class Solver {
     return best;
   }
   
+  /**
+   * Single threaded depth-limited depth first search, with no multithreading.
+   * @param s The tile sequence
+   * @param b The board to search
+   * @return The final best board state that it can find.
+   */
   public Board solve_ldfs(int[] s, Board b) {
     Board input = b;
     fbest_score = -1;
@@ -181,6 +187,14 @@ public class Solver {
     return fbest == null ? input : fbest;
   }
   
+  /**
+   * Solves a board game using a depth-limited depth first search.
+   * Also makes use of some backtracking to further optimise the result.
+   * Will also attempt to run multithreadedly.
+   * @param s The tile sequence
+   * @param b The board to search
+   * @return The final best board state that it can find.
+   */
   public Board solve_mdfs(int[] s, Board b) {
     Ringbuffer<Board> rb = new Ringbuffer<>(6);
     Board current = b, choke_best = null;
@@ -244,6 +258,15 @@ public class Solver {
     return fbest == null ? b : fbest;
   }
   
+  /**
+   * Somewhat multi-threaded depth-first search.
+   * Performs a DFS of the subtrees from the current node in parallel.
+   * @param s The tile sequence
+   * @param b The board to search
+   * @param pool The thread pool in which to submit jobs to.
+   * @return The board with the highest evaluation or null if no board can
+   *         continue.
+   */
   private Board solve_pdfs(int[] s, Board b, ExecutorService pool) {
     List<Future<Board>> rets = new ArrayList<>(BOARD_WIDTH);
     Board best = null;
@@ -285,10 +308,15 @@ public class Solver {
       this.parent = parent;
     }
     
+    /**
+     * The plumbing is a bit unusual since this class was written
+     * after solve_dfs was...
+     * @return
+     * @throws Exception 
+     */
     @Override
     public Board call() throws Exception {
       return parent.solve_dfs(s, MAX_DEPTH, input, 1);
     }
-  }
-  
+  } 
 }
