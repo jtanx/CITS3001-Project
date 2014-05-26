@@ -140,7 +140,7 @@
 
 While largely the same, rules concerning the placement of tiles and which tiles would be inserted after each slide were modified, making the game completely deterministic. In particular, the sequence of tiles which would be inserted after every move was known, and was always placed in the row with the lowest lexicographic score, or in the `most clockwise' row for the case of a tie.
 
-\section{Prior work}
+\section{Prior work}\label{section:prior-work}
 Being a relatively new game, the presence of pre-existing solvers was limited. Nonetheless, two works were considered --- one a solver for \threes{}\cite{tsolver}, and another a solver for a related game, \emph{2048}\cite{2048solver}. Both solutions used a minimax strategy with $\alpha$--$\beta$ pruning. As the modified version of \threes{} was deterministic, minimax was not an applicable solution. Still, it was found that of more importance was understanding \emph{how} these solvers distinguished good board states from bad ones.
 
 \subsection{\threes{} solver} \label{threes-solver}
@@ -193,6 +193,40 @@ Although this method does not guarantee that \emph{the} optimal solution to be f
 In testing, it is typical for this approach to solve to at least 1000 moves, but this is notwithstanding boards where it is particularly difficult to select good moves. In cases where the tile sequence is unfavourable, it may be found that it will solve no more than 200 moves. Such boards are ones where there is a very high proportion of low valued (1 or 2) tiles in sequences which makes them uncombinable. The presence of such uncombinable tiles severely limits the performance of the solver, as they quickly fill the board yet do not significantly contribute to its score.
 
 However, on boards where the tile sequence is favourable (easily combinable), it has been shown that this solver can continue for many thousands of moves quite easily. This would suggest that this approach is very good at handling and managing boards where tile sequences are easily combinable, but it breaks down when it has to handle cases where there may be many uncombinable tiles at  any one stage. It should be noted that any agent will not perform well if a long sequence of uncombinable tiles occurs. 
+
+\section{Performance anlysis}
+As there is no feedback, the run-time of this method will vary from board to board, and can vary significantly from computer to computer. It is typical for it to run in excess of 10 moves per second when run on a fairly modern computer. The worst-case running time for this algorithm is proportional to $O(k(b^n))$ where $b$ is the branching factor (4), $n$ is the depth limit (8) and k is the number of tiles in the sequence. This corresponds to where a complete depth-first search to a depth 8 is required for each move of 8 steps.
+
+Multithreading was introduced fairly late, but it did help to significantly increase the solving speed --- often by a factor of two, where the resources are available. This was achieved by splitting the game tree into 4 subtrees (by moving in the 4 directions) and searching each of the 4 subtrees in parallel. However, this design means that it will use at most 4 (logical) cores, and will often slightly under-utilise them, given that the game tree is not balanced.
+
+\section{Determination of heuristics to be used}
+Discerning which heuristics to use was difficult. As previously discussed in section~\ref{section:prior-work}, prior work helped immensely to create useful heuristics. In any case, this process still required a fair amount of trial-and-error by simply observing what would happen if a particular heuristic was used. Over the course of this process, the following heuristics were considered:
+
+\begin{enumerate}
+	\singlespacing
+	\item The current score of the board
+	\item The average tile value of the board
+	\item The median tile value of the board
+	\item The number of tiles with value greater than three
+	\item The number of tiles with value greater than the average
+	\item The number of tiles with value greater than the median
+	\item The number of tiles with value greater than the average
+	\item The weighted sum of the number of combinable tiles
+	\item Counting the number of time the sign changes along all rows/columns
+	\item The degrees-of-freedom of the board
+	\item The number of empty tiles on the board
+	\item Counting the number of time the sign changes along all rows/columns and weighting it for larger differences
+	\item The smoothness of the board
+	\item The number of combinable tiles on the board
+	\onehalfspacing
+\end{enumerate}
+
+In the end, only the last 5 heuristics (10-14) were used. Of special note is using the score of the board. While this is perhaps the most obvious heuristic, it was found to be problematic as it would often `drown out' the other heuristics, especially for long running boards with very high scores. Even when using the logarithm of the score, it did not often produce good results.
+
+\section{Determination of heuristic weights}
+Next to figuring out which heuristics to use was determining how they should be weighted for optimal performance. This was perhaps the most time consuming step, simply because of the sheer number of possible weight combinations. 
+
+While not the most efficient method, such heuristic weights were found by simply enumerating all possible combinations and observing which ones produced the best results. 
 
 
 \chapter{Consideration of alternative solutions}
