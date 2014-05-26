@@ -3,6 +3,7 @@ package threes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -22,22 +23,35 @@ public class Solver {
   private static final Direction[] directions = {
     Direction.LEFT, Direction.UP, Direction.RIGHT, Direction.DOWN
   };
+  private static final int nThreads;
+  static {
+    int nt = Runtime.getRuntime().availableProcessors();
+    nt = nt <= 1 ? 1 : nt > 4 ? 4 : nt;
+    nThreads = nt;
+  }
+  
   private Board fbest = null;
   private int fbest_score = -1;
   private final int[] learning_starts = {18,0,0,0};
   
   private final int[] factors = {18,2,2,9}; //The best all-rounder
-  private final int[] lb3factors = {18,2,3,10}; //Modified factors to continue after 18,2,2,9 fails for lb3
+  private final int[] lb3factors = {18,1,2,13}; //Modified factors to continue after 18,2,2,9 fails for lb3
   private final int[] lb1factorsb = {18,2,1,8}; //Continuation of longboard1 but with backtrack 6.
   private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
   private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
   private final int[] lowfactors3 = {18,1,0,1}; 
   private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot  
-  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors3, lowfactors};
+  //private final int[] lb3factors2 = {18,1,3,9};
+  //private final int[] lb3factors2 = {18,2,2,12};
+  private final int[] lb3factors2 = {18,3,2,13};
+  private final int[] lb3factors3 = {18,2,1,6};
+  private final int[][] choicefactors = {factors, lb3factors, lb3factors2, lb3factors3, lowfactors, lowfactors3};//, lb1factorsb};//, nfactors, lowfactors3, lowfactors};
   private int[] currentfactors = choicefactors[0];
   
   public Solver(int[] learning_startfactors) {
     log_info("Heuristic weights: %s", Arrays.deepToString(choicefactors));
+    log_info("Reported number of processors: %d", Runtime.getRuntime().availableProcessors());
+    log_info("No. of threads to be used for multithreaded versions: %d\n", nThreads);
     if (learning_startfactors != null) {
       if (learning_startfactors.length != learning_starts.length) {
         throw new IllegalArgumentException("Invalid learning factor size");
@@ -84,7 +98,8 @@ public class Solver {
       int[] best = new int[fl.length];
       int best_score = -1;
       Board best_board = null;
-      
+      ExecutorService pool = Executors.newFixedThreadPool(nThreads);
+
       for (int i = learning_starts[0]; i < 19; i++) {
           for (int j = learning_starts[1]; j < 19; j++) {
               for (int k = learning_starts[2]; k < 8; k++) {
@@ -92,7 +107,7 @@ public class Solver {
                     fl[0] = i; fl[1] = j;
                     fl[2] = k; fl[3] = l; 
 
-                    Board n = solve_ldfs(s, b);
+                    Board n = solve_pndfs(s, b, pool);
                     int score = n.score();
                     if (score > best_score) {
                         System.arraycopy(factors, 0, best, 0, best.length);
@@ -122,6 +137,8 @@ public class Solver {
     for (int v : best)
       System.out.printf("%d ", v);
     System.out.println();
+    
+    pool.shutdown();
   }
   
   private synchronized void updateBest(Board b) {
@@ -164,7 +181,7 @@ public class Solver {
   }
   
   /**
-   * Single threaded depth-limited depth first search, with no multithreading.
+   * Single threaded depth-limited depth first search, with no backtracking.
    * @param s The tile sequence
    * @param b The board to search
    * @return The final best board state that it can find.
@@ -177,9 +194,32 @@ public class Solver {
     while (b != null && !b.finished()) {
       b = solve_dfs(s, MAX_DEPTH, b, 0);
       if (b != null) {
-        //System.out.println(b);
-        //System.out.println(b.score());
-        //System.out.println(b.nMoves());
+        log_info(b);
+      }
+    }
+    
+    //Super edge-case: The input board can't be moved...
+    return fbest == null ? input : fbest;
+  }
+  
+  /**
+   * Multi-threaded depth-limited depth first search, with no backtracking.
+   * @param s The tile sequence
+   * @param b The board to search
+   * @param pool The thread pool
+   * @return The final best board state that it can find.
+   */
+  private Board solve_pndfs(int[] s, Board b, ExecutorService pool) {
+    Board input = b;
+    
+    fbest_score = -1;
+    fbest = null;
+    currentfactors = factors;
+    
+    while (b != null && !b.finished()) {
+      b = solve_pdfs(s, b, pool);
+      if (b != null) {
+        //log_info(b);
       }
     }
     
@@ -199,11 +239,7 @@ public class Solver {
     Ringbuffer<Board> rb = new Ringbuffer<>(6);
     Board current = b, choke_best = null;
     char fc = 0, foff = 0;
-    
-    int nThreads = Runtime.getRuntime().availableProcessors();
-    log_info("Reported no. of processors: %d\n", nThreads);
-    nThreads = nThreads <= 1 ? 1 : nThreads > 4 ? 4 : nThreads;
-    log_info("No. of threads to be used: %d\n", nThreads);
+    int tmp = 0;
     //VTEC just kicked in yo
     ExecutorService pool = Executors.newFixedThreadPool(nThreads);
     
@@ -222,7 +258,7 @@ public class Solver {
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
-        if (fc > 2) {
+        if (fc > 3) {
           log_info("Volatile weights were used; switching back to %s",
                   Arrays.toString(choicefactors[0]));
           fc = 0;
@@ -232,7 +268,11 @@ public class Solver {
       
       if (current != null) {
         log_info(current);
-      } else if (fbest != null && fbest.nMoves() < s.length) {
+      } /*else if (tmp++ >= 2) {
+        current = null;
+        log_info("TMP");
+        log_info(rb.pop());
+      }*/ else if (fbest != null && fbest.nMoves() < s.length) {
         current = rb.pop();
         
         if (choke_best != fbest) {

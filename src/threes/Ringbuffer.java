@@ -2,6 +2,8 @@
 package threes;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Stack;
 
 /**
  * Buffers the previous n moves made.
@@ -12,6 +14,7 @@ import java.util.LinkedList;
 public class Ringbuffer<T> {
   private LinkedList<T> buf;
   private final int maxSize;
+  private boolean isBacktracking;
   
   public Ringbuffer(int maxSize) {
     if (maxSize <= 0) {
@@ -22,7 +25,8 @@ public class Ringbuffer<T> {
   }
   
   public void push(T it) {
-    if (buf.size() > maxSize) {
+    //prevents stinker movements TODO: Does this cause looping???
+    if ((!isBacktracking && buf.size() > maxSize) || (isBacktracking && buf.size() > maxSize + 1)) {
       buf.removeFirst();
     }
     buf.addLast(it);
@@ -32,8 +36,25 @@ public class Ringbuffer<T> {
     if (!buf.isEmpty()) {
       T ret = buf.peekFirst();
       buf.clear();
+      isBacktracking = true;
       return ret;
     }
     throw new IllegalStateException("Can't pop an empty ringbuffer");
+  }
+  
+  public Stack<T> pop(int count) {
+    if (!buf.isEmpty()) {
+      Stack<T> ret = new Stack<>();
+      for (int i = 0; i < count && !buf.isEmpty(); i++) {
+        ret.add(buf.removeFirst());
+      }
+      buf.clear();
+      return ret;
+    }
+    throw new IllegalStateException("Can't pop an empty ringbuffer");
+  }
+  
+  public void clear() {
+    buf.clear();
   }
 }
