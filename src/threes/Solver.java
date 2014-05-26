@@ -1,6 +1,13 @@
 package threes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import threes.Board.Direction;
 import static threes.Threes.log_info;
 
@@ -12,6 +19,9 @@ import static threes.Threes.log_info;
 public class Solver {
   private static final int MAX_DEPTH = 8;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
+  private static final Direction[] directions = {
+    Direction.LEFT, Direction.UP, Direction.RIGHT, Direction.DOWN
+  };
   private Board fbest = null;
   private int fbest_score = -1;
   private final int[] learning_starts = {18,0,0,0};
@@ -23,7 +33,7 @@ public class Solver {
   private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
   private final int[] lowfactors3 = {18,1,0,1}; 
   private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 - oh jackpot  
-  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors, lowfactors3};
+  private final int[][] choicefactors = {factors, lb3factors, lb1factorsb, nfactors, lowfactors3, lowfactors};
   private int[] currentfactors = choicefactors[0];
   
   public Solver(int[] learning_startfactors) {
@@ -114,10 +124,15 @@ public class Solver {
     System.out.println();
   }
   
+  private synchronized void updateBest(Board b) {
+    int score = b.score();
+    if (score > fbest_score) {
+      fbest_score = score;
+      fbest = b;
+    }
+  }
+  
   private Board solve_dfs(int[] s, int depthLimit, Board b, int depth) {
-    Direction[] directions = {Direction.LEFT, Direction.UP, 
-                              Direction.RIGHT, Direction.DOWN};
-    
     if (depth >= depthLimit) { //Cutoff test
       return b;
     }
@@ -134,11 +149,7 @@ public class Solver {
         }
         if (candidate != null) {
           if (candidate.finished()) {
-            int score = candidate.score();
-            if (score > fbest_score) {
-              fbest_score = score;
-              fbest = candidate;
-            }
+            updateBest(candidate);
           } else {
             int score = evaluate(candidate, s);
             if (score > best_score ) {
@@ -175,11 +186,18 @@ public class Solver {
     Board current = b, choke_best = null;
     char fc = 0, foff = 0;
     
+    int nThreads = Runtime.getRuntime().availableProcessors();
+    System.err.printf("Reported no. of processors: %d\n", nThreads);
+    nThreads = nThreads <= 1 ? 1 : nThreads > 4 ? 4 : nThreads;
+    System.err.printf("No. of threads: %d\n", nThreads);
+    //VTEC just kicked in yo
+    ExecutorService pool = Executors.newFixedThreadPool(nThreads);
+    
     fbest_score = -1;
     fbest = null;
     while (current != null && !current.finished()) {
       rb.push(current);
-      current = solve_dfs(s, MAX_DEPTH, current, 0);
+      current = solve_pdfs(s, current, pool);
       
       if (choke_best != null && choke_best != fbest) {
         log_info("Recovery!: [%d:%s] %d(%d) --> %d(%d)",
@@ -190,7 +208,7 @@ public class Solver {
         choke_best = null;
         //Test: Is it always best to stick to 18,2,2,9 where possible?
         //Maybe not, but some factors shouldn't be used for extended periods of time.
-        if (fc > 3) {
+        if (fc > 2) {
           log_info("Volatile weights were used; switching back to %s",
                   Arrays.toString(choicefactors[0]));
           fc = 0;
@@ -222,7 +240,55 @@ public class Solver {
       }
     }
    
+    pool.shutdown();
     return fbest == null ? b : fbest;
+  }
+  
+  private Board solve_pdfs(int[] s, Board b, ExecutorService pool) {
+    List<Future<Board>> rets = new ArrayList<>(BOARD_WIDTH);
+    Board best = null;
+    int best_score = -1;
+    
+    for (Direction d : directions) {
+      Board n = new Board(b);
+      if (n.move(s, d)) {
+        rets.add(pool.submit(new ParallelDFS(this, s, n)));
+      }
+    }
+    
+    for (Future<Board> ret : rets) {
+      try {
+        Board c = ret.get();
+        if (c != null) {
+          int score = evaluate(c, s);
+          if (score > best_score) {
+            best = c;
+            best_score = score;
+          }
+        }
+      } catch (InterruptedException | ExecutionException e) {
+        System.err.println("Error: " + e.getMessage());
+      }
+    }
+    
+    return best;
+  }
+  
+  private static class ParallelDFS implements Callable<Board> {
+    private final int[] s;
+    private final Board input;
+    private final Solver parent;
+    
+    public ParallelDFS(Solver parent, int[] s, Board b) {
+      this.s = s;
+      this.input = b;
+      this.parent = parent;
+    }
+    
+    @Override
+    public Board call() throws Exception {
+      return parent.solve_dfs(s, MAX_DEPTH, input, 1);
+    }
   }
   
 }

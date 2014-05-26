@@ -272,25 +272,25 @@ public class Threes {
     runtime = System.nanoTime() - runtime;
     
     Formatter f = new Formatter();
-    f.format("%d, %d, %d, %d, %d, %d\n",
-                  bs.score(), bs.dof(), 
-                  bs.zeros(), bs.checkerboarding3(),
-                  bs.smoothness(), bs.nCombinable());
-    f.format("Used %d/%d available moves in %.2f seconds. (%.2f m/s)\n", 
-                      bs.moves().length(), s.length, 
-                      runtime / 1000000000.0,
-                      bs.moves().length() / (runtime / 1000000000.0));
+    String endl = System.getProperty("line.separator");
+    f.format("%d, %d, %d, %d, %d, %d%s",
+              bs.score(), bs.dof(), 
+              bs.zeros(), bs.checkerboarding3(),
+              bs.smoothness(), bs.nCombinable(), endl);
+    f.format("Used %d/%d available moves in %.2f seconds. (%.2f m/s)%s", 
+              bs.moves().length(), s.length, 
+              runtime / 1000000000.0,
+              bs.moves().length() / (runtime / 1000000000.0),
+              endl);
     f.format(bs.moves());
-    f.format("\n");
     
     log_info(bs);
-    System.out.print(f.toString());
-    
+    System.out.println(f.toString());
     if (settings.outputFile != null) {
       PrintWriter writer = null;
       try {
         writer = new PrintWriter(settings.outputFile, "UTF-8");
-        writer.printf(f.toString());
+        writer.println(f.toString());
       } catch (IOException e) {
         System.err.printf("Failed to write out to %s: %s\n", 
                 settings.outputFile, e.getMessage());
