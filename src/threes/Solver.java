@@ -187,9 +187,9 @@ public class Solver {
     char fc = 0, foff = 0;
     
     int nThreads = Runtime.getRuntime().availableProcessors();
-    System.err.printf("Reported no. of processors: %d\n", nThreads);
+    log_info("Reported no. of processors: %d\n", nThreads);
     nThreads = nThreads <= 1 ? 1 : nThreads > 4 ? 4 : nThreads;
-    System.err.printf("No. of threads: %d\n", nThreads);
+    log_info("No. of threads to be used: %d\n", nThreads);
     //VTEC just kicked in yo
     ExecutorService pool = Executors.newFixedThreadPool(nThreads);
     

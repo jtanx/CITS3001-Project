@@ -237,29 +237,6 @@ public class Board {
            ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
   }
   
-  public int dof2() {
-    char can_shift = 0;
-    for (char i = 0; i < BOARD_WIDTH; i++) {
-      for (char j = 1; j < BOARD_WIDTH; j++) {
-        int cl = it[i * BOARD_WIDTH + j];
-        int pl = it[i * BOARD_WIDTH + j - 1];
-        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
-        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
-        
-        if (shift_valid(cl, pl))
-          can_shift |= 1;
-        if (shift_valid(pl, cl))
-          can_shift |= 4;
-        if (shift_valid(cu, pu))
-          can_shift |= 2;
-        if (shift_valid(pu, cu))
-          can_shift |= 8;
-      }
-    }
-    return (can_shift & 1) + ((can_shift & 2) >> 1) + 
-           ((can_shift & 4) >> 2) + ((can_shift & 8) >> 3);
-  }
-  
   public int nCombinable() {
     int nCombinable = 0;
     for (char i = 0; i < BOARD_WIDTH; i++) {
@@ -284,75 +261,6 @@ public class Board {
     return nCombinable;
   }
   
-  //Not useful
-  public int nCombinable2() {
-    int nCombinable = 0;
-    for (char i = 0; i < BOARD_WIDTH; i++) {
-      for (char j = 1; j < BOARD_WIDTH; j++) {
-        int cl = it[i * BOARD_WIDTH + j];
-        int pl = it[i * BOARD_WIDTH + j - 1];
-        int cu = it[g_trn[1][i * BOARD_WIDTH + j]];
-        int pu = it[g_trn[1][i * BOARD_WIDTH + j - 1]];
-        
-        if (cl != 0 && pl != 0) {
-          if (shift_valid(cl,pl) || shift_valid(pl, cl)) {
-            nCombinable += Math.max(elevation(Math.max(cl,pl)), 1);
-          }
-        }
-        if (cu != 0 && pu != 0) {
-          if (shift_valid(cu, pu) || shift_valid(pu, cu)) {
-            nCombinable += Math.max(elevation(Math.max(cu,pu)), 1);
-          }
-        }
-      }
-    }
-    return nCombinable;
-  }
-  
-  //Not useful
-  public int gtaverage() {
-    int total = 0, gta = 0, max = 0;
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      int el = elevation(it[i]);
-      if (el > max)
-        max = el;
-      total += el;
-    }
-    total = (total - max) / (BOARD_SPACE - 1);
-    
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      if (elevation(it[i]) > total)
-        gta++;
-    }
-    return gta;
-  }
-  
-  //Not useful
-  public int gtmedian() {
-    int median;
-    int[] heights = new int[BOARD_SPACE];
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      heights[i] = elevation(it[i]);
-    }
-    Arrays.sort(heights);
-    median = (heights[BOARD_SPACE/2] + heights[BOARD_SPACE/2 + 1]) / 2;
-    return median;
-  }
-  
-  //Normalised to 0-20. Not useful
-  public int amdiff() {
-    int mean = 0, max = 0;
-    for (int i = 0; i < BOARD_SPACE; i++) {
-      int el = elevation(it[i]);
-      if (el > max)
-        max = el;
-      mean += el;
-    }
-    mean = (mean) / (BOARD_SPACE - 1);
-    
-    return ((20 * (max - mean)) / max);
-  }
-  
   public boolean finished() {
     return finished;
   }
@@ -365,50 +273,8 @@ public class Board {
     return n_z;
   }
   
-  //Not useful
-  public int gthree() {
-    int n_z = 0;
-    for (int i = 0; i < BOARD_SPACE; i++)
-      if (it[i] > 2)
-        n_z++;
-    return n_z;
-  }
-  
   private int sign(int v) {
     return v < 0 ? -1 : v > 0 ? 1 : 0;
-  }
-  
-  //Not as useful
-  public int checkerboarding2() {
-    int nSwitches = 0;
-    
-    for (char i = 0; i < BOARD_WIDTH; i++) {
-      int il = 0, id = 0;
-      int sgnl = sign(it[g_trn[0][i * BOARD_WIDTH + 1]] - 
-                    it[g_trn[0][i * BOARD_WIDTH]]);
-      int sgnd = sign(it[g_trn[1][i * BOARD_WIDTH + 1]] - 
-                    it[g_trn[1][i * BOARD_WIDTH]]);
-      
-      for (char j = 0; j < BOARD_WIDTH - 1; j++){
-        int csgnl = sign(it[g_trn[0][i * BOARD_WIDTH + j + 1]] - 
-                    it[g_trn[0][i * BOARD_WIDTH + j]]);
-        int csgnd = sign(it[g_trn[1][i * BOARD_WIDTH + j + 1]] - 
-                    it[g_trn[1][i * BOARD_WIDTH + j]]);
-        
-        if (csgnl != 0 && csgnl != sgnl) {
-          il += sgnl == 0 ? 0 : 2;
-          sgnl = csgnl;
-        }
-        if (csgnd != 0 && csgnd != sgnd) {
-          id += sgnd == 0 ? 0 : 2;
-          sgnd = csgnd;
-        }
-      }
-      
-      nSwitches += il + id;
-    }
-    
-    return -nSwitches;
   }
   
   public int checkerboarding3() {
