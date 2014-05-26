@@ -183,7 +183,7 @@ public class Threes {
     System.out.println("  -n Disables backtracking.");
     System.out.println("  -l <i,j,k,l> (Manual) learning mode.");
     System.out.println("  -o <output_file> Writes the moves to the specified file.");
-    System.out.println("  -m <moves_file> Reads in a moves file to play the board with (benchmarking purposes).");
+    System.out.println("  -m <moves_file> Reads in a moves file to play the board (benchmarking purposes).");
     System.out.println();
     System.out.println("The output moves will always be printed to stdout.");
     System.out.println("Specifying a moves file with '-m' takes precedence over solving.");
@@ -231,7 +231,7 @@ public class Threes {
         moves = parseMoves(settings.movesFile);
       } catch (IOException e) {
         System.err.printf("Invalid input moves file %s: %s\n",
-                args[1], e.getMessage());
+                settings.movesFile, e.getMessage());
         return;
       }
       
@@ -287,17 +287,11 @@ public class Threes {
     log_info(bs);
     System.out.println(f.toString());
     if (settings.outputFile != null) {
-      PrintWriter writer = null;
-      try {
-        writer = new PrintWriter(settings.outputFile, "UTF-8");
+      try (PrintWriter writer = new PrintWriter(settings.outputFile, "UTF-8")) {
         writer.println(f.toString());
       } catch (IOException e) {
         System.err.printf("Failed to write out to %s: %s\n", 
                 settings.outputFile, e.getMessage());
-      } finally {
-        if (writer != null) {
-          writer.close();
-        }
       }
     }
   }
