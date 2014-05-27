@@ -254,6 +254,7 @@ public class Threes {
     }
     
     Solver solver = new Solver(settings.starting_learnfactors);
+    ASSolver solver2 = new ASSolver(s);
     if (settings.starting_learnfactors != null) {
       System.out.println("Learning factors...");
       System.out.println("Starting with:" + 
@@ -267,7 +268,8 @@ public class Threes {
     if (settings.noBacktrack) {
       bs = solver.solve_ldfs(s, new Board(bt));
     } else {
-      bs = solver.solve_mdfs(s, new Board(bt));
+      //bs = solver.solve_mdfs(s, new Board(bt));
+      bs = solver2.solve_astar(new Board(bt));
     }
     runtime = System.nanoTime() - runtime;
     
