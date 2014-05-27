@@ -83,7 +83,10 @@ public class ASSolver {
     LimitedQueue<Board> fret = new LimitedQueue<>(new BComparer(), MAX_QUEUE_SIZE);
     
     for (Direction d : directions) {
-      rets.add(pool.submit(new ParallelDFS(b)));
+      Board n = new Board(b);
+      if (n.move(tileSequence, d)) {
+        rets.add(pool.submit(new ParallelDFS(n)));
+      }
     }
     
     for (Future<LimitedQueue<Board>> ret : rets) {
@@ -104,11 +107,6 @@ public class ASSolver {
     return lq;
   }
   
-  private boolean isQuiescent() {
-    Iterator<Board> it = pq.descendingIterator();
-    return false;
-  }
-  
   public Board solve_astar(Board b) {
     ExecutorService pool = Executors.newFixedThreadPool(nThreads);
     long start = System.nanoTime();
@@ -121,7 +119,7 @@ public class ASSolver {
     while (!pq.isEmpty()) {
       long runtime = System.nanoTime() - start;
       if (fbest != null) {
-        if (runtime > maxTime * 2 || nFBestSame >= 10000) {
+        if ((runtime > maxTime && nFBestSame >= 4) || nFBestSame >= 15000) {
           pool.shutdown();
           return fbest;
         }
@@ -137,6 +135,7 @@ public class ASSolver {
       Board n = pq.pollLast();
       log_info(n);
       LimitedQueue<Board> lq = lookahead_pdfs(n, pool);
+      //LimitedQueue<Board> lq = lookahead_ldfs(n);
       pq.addAll(lq);
       log_info("PQ Size: %d (%d)", pq.size(), nFBestSame);
     }
@@ -193,8 +192,8 @@ public class ASSolver {
     //TODO: Add in number of moves made too?
     @Override
     public int compare(Board o1, Board o2) {
-      int f1 = o1.nMoves() * 6 + evaluate(o1);
-      int f2 = o2.nMoves() * 6 + evaluate(o2);
+      int f1 = o1.nMoves() * 7 + evaluate(o1);
+      int f2 = o2.nMoves() * 7 + evaluate(o2);
       return f1 - f2;
     }
   }
