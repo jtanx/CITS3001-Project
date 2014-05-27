@@ -1,0 +1,8 @@
+*.exe
+*.jar
+indexed/
+raw/
+
+!ico/
+ico/*
+!ico/logo.ico
