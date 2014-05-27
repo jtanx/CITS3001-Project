@@ -110,7 +110,7 @@ public class ASSolver implements Solver{
    */
   private LimitedQueue<Board> lookahead_pdfs(Board b, ExecutorService pool) {
     List<Future<LimitedQueue<Board>>> rets = new ArrayList<>();
-    LimitedQueue<Board> fret = new LimitedQueue<>(new BComparer(), ipq_size);
+    LimitedQueue<Board> fret = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
     
     for (Direction d : directions) {
       Board n = new Board(b);
@@ -138,7 +138,7 @@ public class ASSolver implements Solver{
    * @return A LimitedQueue containing the top MAX_QUEUE_SIZE nodes
    */
   private LimitedQueue<Board> lookahead_ldfs(Board b) {
-    LimitedQueue<Board> lq = new LimitedQueue<>(new BComparer(), ipq_size);
+    LimitedQueue<Board> lq = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
     lookahead_dfs(b, lq, 0);
     return lq;
   }
@@ -270,7 +270,7 @@ public class ASSolver implements Solver{
     
     public ParallelDFS(Board b) {
       this.input = b;
-      this.lq = new LimitedQueue<>(new BComparer(), ipq_size);
+      this.lq = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
     }
 
     @Override
