@@ -142,6 +142,42 @@ public class Threes {
           settings.noBacktrack = !settings.noBacktrack;
           break;
           
+        case 's':
+          settings.singleThreaded = !settings.singleThreaded;
+          break;
+          
+        case 'd':
+          settings.useDLDFS = !settings.useDLDFS;
+        break;
+          
+        case 'a':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.lookahead = Integer.parseInt(args[++pos]);
+          break;
+          
+        case 'q':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.qui_size = Integer.parseInt(args[++pos]);
+          break;
+          
+        case 'u':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.pq_size = Integer.parseInt(args[++pos]);
+          break;
+          
+        case 'i':
+          if (pos + 1 >= args.length) {
+            return -1;
+          }
+          settings.ipq_size = Integer.parseInt(args[++pos]);
+          break;
+        
         case 'o':
           if (pos + 1 >= args.length) {
             return -1;
@@ -177,16 +213,23 @@ public class Threes {
   
   public static void usage() {
     System.out.println("CITS3001 Threes solver - 2014");
-    System.out.println("Usage: threes [-vn -l <i,j,k,l> -o <output_file> -m <moves_file>] input_file");
+    System.out.println("Usage: threes [-vsnd -l <i,j,k,l> -a <lookahead> -u <pq_sz> -i <ipq_sz> -q <qui_sz> -o <output_file> -m <moves_file>] input_file");
     System.out.println("Options:");
     System.out.println("  -v Enables verbose output to stderr.");
-    System.out.println("  -n Disables backtracking.");
-    System.out.println("  -l <i,j,k,l> (Manual) learning mode.");
+    System.out.println("  -s Runs the solving algorithm in single-threaded mode.");
+    System.out.println("  -d Uses depth-limited depth-first search (DLDFS), instead of priority search.");
+    System.out.println("  -n DLDFS mode: Disables backtracking.");
+    System.out.println("  -a <lookahead> Controls the lookahead. Default is 8 moves.");
+    System.out.println("  -q <qui_sz> Changes the quiescence limit. Default is 11000.");
+    System.out.println("  -u <pq_sz> Changes the size limit of the main priority queue. Default is 150.");
+    System.out.println("  -i <ipq_sz> Changes the size limit of the individual priority queues. Default is 3.");
+    System.out.println("  -l <i,j,k,l> (Manual) learning mode. <i,j,k,l> specifies the inital weights");
     System.out.println("  -o <output_file> Writes the moves to the specified file.");
     System.out.println("  -m <moves_file> Reads in a moves file to play the board (benchmarking purposes).");
     System.out.println();
     System.out.println("The output moves will always be printed to stdout.");
     System.out.println("Specifying a moves file with '-m' takes precedence over solving.");
+    System.out.println("Unless otherwise specified, options refer to when using priority search (default).");
   }
   
   /**
@@ -253,24 +296,28 @@ public class Threes {
       return;
     }
     
-    Solver solver = new Solver(settings.starting_learnfactors);
-    ASSolver solver2 = new ASSolver(s);
     if (settings.starting_learnfactors != null) {
       System.out.println("Learning factors...");
       System.out.println("Starting with:" + 
                          Arrays.toString(settings.starting_learnfactors));
-      solver.learn_factors(new Board(bt), s, false);
+      DLDFSolver solver = new DLDFSolver(s, settings.starting_learnfactors,
+                                         settings.singleThreaded,
+                                         !settings.noBacktrack);
+      solver.learn_factors(new Board(bt), false);
       return;
+    } 
+    
+    Solver solver;
+    if (settings.useDLDFS) {
+      solver = new DLDFSolver(s, settings.singleThreaded, !settings.noBacktrack);
+    } else {
+      solver = new ASSolver(s, settings.singleThreaded, settings.lookahead, 
+                            settings.pq_size, settings.ipq_size, settings.qui_size);
     }
 
     Board bs;
     long runtime = System.nanoTime();
-    if (settings.noBacktrack) {
-      bs = solver.solve_ldfs(s, new Board(bt));
-    } else {
-      //bs = solver.solve_mdfs(s, new Board(bt));
-      bs = solver2.solve_astar(new Board(bt));
-    }
+    bs = solver.solve(new Board(bt));
     runtime = System.nanoTime() - runtime;
     
     Formatter f = new Formatter();
@@ -301,6 +348,7 @@ public class Threes {
   private static class Settings {
     String inputBoard, outputFile, movesFile;
     int[] starting_learnfactors;
-    boolean noBacktrack;
+    boolean noBacktrack, singleThreaded, useDLDFS;
+    int lookahead = -1, pq_size = -1, ipq_size = -1, qui_size = -1;
   }
 }
