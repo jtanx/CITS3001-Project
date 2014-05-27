@@ -20,8 +20,8 @@ import static threes.Threes.log_info;
  */
 public class ASSolver implements Solver{
   private static final int DEFAULT_LOOKAHEAD = 8;
-  private static final int DEFAULT_PQ_SIZE = 100;
-  private static final int DEFAULT_IPQ_SIZE = 3;
+  private static final int DEFAULT_PQ_SIZE = 150;
+  private static final int DEFAULT_IPQ_SIZE = 4;
   private static final int DEFAULT_QUI_SIZE = 11000;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private static final int[] factors = {18,2,2,9}; //The best all-rounder

@@ -222,8 +222,8 @@ public class Threes {
     System.out.println("  -n DLDFS mode: Disables backtracking.");
     System.out.println("  -a <lookahead> Controls the lookahead. Default is 8 moves.");
     System.out.println("  -q <qui_sz> Changes the quiescence limit. Default is 11000.");
-    System.out.println("  -u <pq_sz> Change the size limit of the main priority queue. Default is 100.");
-    System.out.println("  -i <ipq_sz> Change the size limit of individual priority queues. Default is 3.");
+    System.out.println("  -u <pq_sz> Change the size limit of the main priority queue. Default is 150.");
+    System.out.println("  -i <ipq_sz> Change the size limit of individual priority queues. Default is 4.");
     System.out.println("  -l <i,j,k,l> (Manual) learning mode. <i,j,k,l> specifies the inital weights");
     System.out.println("  -o <output_file> Writes the moves to the specified file.");
     System.out.println("  -m <moves_file> Reads a moves file to play the board (benchmarking purposes).");
