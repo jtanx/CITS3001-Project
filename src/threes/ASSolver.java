@@ -46,7 +46,7 @@ public class ASSolver {
   public ASSolver(int[] s) {
     tileSequence = new int[s.length];
     System.arraycopy(s, 0, tileSequence, 0, s.length);
-    pq = new LimitedQueue<>(new BComparer(), 200);
+    pq = new LimitedQueue<>(new BComparer(), 150);
     maxTime = (s.length / 5) * 1000000000L;
   }
   
@@ -119,7 +119,8 @@ public class ASSolver {
     while (!pq.isEmpty()) {
       long runtime = System.nanoTime() - start;
       if (fbest != null) {
-        if ((runtime > maxTime && nFBestSame >= 4) || nFBestSame >= 15000) {
+        if (((fbest.nMoves() == tileSequence.length || runtime > maxTime) 
+                && nFBestSame >= 5) || nFBestSame >= 11000) {
           pool.shutdown();
           return fbest;
         }
@@ -133,11 +134,11 @@ public class ASSolver {
       }
       
       Board n = pq.pollLast();
+      log_info("PQ Size: %d (%d)", pq.size(), nFBestSame);
       log_info(n);
       LimitedQueue<Board> lq = lookahead_pdfs(n, pool);
       //LimitedQueue<Board> lq = lookahead_ldfs(n);
       pq.addAll(lq);
-      log_info("PQ Size: %d (%d)", pq.size(), nFBestSame);
     }
     
     pool.shutdown();
@@ -192,8 +193,8 @@ public class ASSolver {
     //TODO: Add in number of moves made too?
     @Override
     public int compare(Board o1, Board o2) {
-      int f1 = o1.nMoves() * 7 + evaluate(o1);
-      int f2 = o2.nMoves() * 7 + evaluate(o2);
+      int f1 = o1.nMoves() * 6 + evaluate(o1);
+      int f2 = o2.nMoves() * 6 + evaluate(o2);
       return f1 - f2;
     }
   }
