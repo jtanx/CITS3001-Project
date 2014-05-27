@@ -186,22 +186,18 @@ Informed search strategies, such as A* were also considered to be possible, and 
 For both informed and uninformed search strategies, versions with more restricted memory usage (e.g. IDFS, SMA*, IDA*) could be used to overcome concerns over excessive memory usage.
 
 \chapter{Implementation details}
-The final implementation uses a depth-limited depth first search to examine possible board states from the current position. The leaf nodes are then evaluated using a linear weighted combination of heuristics, where the path from the root to the node with the best evaluation is chosen as the sequence of moves that should be made. This procedure is then repeated until a termination condition is reached, such as exhausting the sequence of moves, or reaching a board state where no further moves are possible. At present, the depth limit has been fixed to a depth of 8, such that it will run at a decent speed.
+The final solution implements two differing methods, with the first being a simple greedy algorithm that chooses the next best move according to some evaluation function, in combination with a fixed lookahead and some measure of backtracking. The second method is a somewhat augmented version of the first implementation, and is closer in description to the A* algorithm. In particular, it maintains a \emph{fixed size} set of the most promising board states, where they are ordered by their $f$ value (in A* notation), which is the sum of their heuristic evaluation and cost function (the number of moves made). As with the first method, this still expands the most promising node first, but the set of nodes that it maintains means that it can try alternate pathways much more flexibly when a dead-end occurs.
 
-Although this method does not guarantee that \emph{the} optimal solution to be found, it does usually find \emph{a} good solution. To further its solving abilities, a measure of backtracking was also introduced, allowing it to go back to a board state from a specified number of iterations prior, which can be re-evaluated. The re-evaluation technique used was to simply vary the weights used for the heuristics, which was found to be different depending on the board conditions.
+Both methods do not guarantee that \emph{the} optimal solution to be found, but it does usually find \emph{a} good solution. This is because both methods don't explore the full game tree, and depend quite heavily on the heuristic function to guide the algorithm in the correct direction. Further expanding on this, it can be seen why the second method is not an implementation of A* --- it only maintains a fixed size pool of unexplored nodes, and the heuristic used is not admissble.
 
-In testing, it is typical for this approach to solve to at least 1000 moves, but this is notwithstanding boards where it is particularly difficult to select good moves. In cases where the tile sequence is unfavourable, it may be found that it will solve no more than 200 moves. Such boards are ones where there is a very high proportion of low valued (1 or 2) tiles in sequences which makes them uncombinable. The presence of such uncombinable tiles severely limits the performance of the solver, as they quickly fill the board yet do not significantly contribute to its score.
+In testing, the second method was consistently better than the first, which is to be expected, since it considers more than just one path as suggested by the heuristic. Perhaps the only benefit to the first method is that it is \emph{very} fast (typically in excess of 50 moves/second). Irregardless, the second method is used by default, with the first method usable by explicit command, simply because a lot of time was spent on this option, and the second method was only added quite late into the project.
+
+From testing, is typical to expect it to solve to at least 1000 moves, but this is notwithstanding boards where it is particularly difficult to select good moves. In cases where the tile sequence is unfavourable, it may be found that it will solve no more than 200 moves. Such boards are ones where there is a very high proportion of low valued (1 or 2) tiles in sequences which makes them uncombinable. The presence of such uncombinable tiles severely limits the performance of the solver, as they quickly fill the board yet do not significantly contribute to its score.
 
 However, on boards where the tile sequence is favourable (easily combinable), it has been shown that this solver can continue for many thousands of moves quite easily. This would suggest that this approach is very good at handling and managing boards where tile sequences are easily combinable, but it breaks down when it has to handle cases where there may be many uncombinable tiles at  any one stage. It should be noted that any agent will not perform well if a long sequence of uncombinable tiles occurs. 
 
-\section{Performance anlysis}
-As there is no feedback, the run-time of this method will vary from board to board, and can vary significantly from computer to computer. It is typical for it to run in excess of 10 moves per second when run on a fairly modern computer. The worst-case running time for this algorithm is proportional to $O(k(b^n))$ where $b$ is the branching factor (4), $n$ is the depth limit (8) and k is the number of tiles in the sequence. This corresponds to where a complete depth-first search to a depth 8 is required for each move of 8 steps.
-
-Multithreading was introduced fairly late, but it did help to significantly increase the solving speed --- often by a factor of two, where the resources are available. This was achieved by splitting the game tree into 4 subtrees (by moving in the 4 directions) and searching each of the 4 subtrees in parallel. However, this design means that it will use at most 4 (logical) cores, and will often slightly under-utilise them, given that the game tree is not balanced.
-
 \section{Determination of heuristics to be used}
 Discerning which heuristics to use was difficult. As previously discussed in section~\ref{section:prior-work}, prior work helped immensely to create useful heuristics. In any case, this process still required a fair amount of trial-and-error by simply observing what would happen if a particular heuristic was used. Over the course of this process, the following heuristics were considered:
-
 \begin{enumerate}
 	\singlespacing
 	\item The current score of the board
@@ -224,10 +220,23 @@ Discerning which heuristics to use was difficult. As previously discussed in sec
 In the end, only the last 5 heuristics (10-14) were used. Of special note is using the score of the board. While this is perhaps the most obvious heuristic, it was found to be problematic as it would often `drown out' the other heuristics, especially for long running boards with very high scores. Even when using the logarithm of the score, it did not often produce good results.
 
 \section{Determination of heuristic weights}
-Next to figuring out which heuristics to use was determining how they should be weighted for optimal performance. This was perhaps the most time consuming step, simply because of the sheer number of possible weight combinations. 
+The heuristics were combined using a linear weighting process. It was found that this step of determining what weights should be used was one of the most time consuming, because of the large range of possible weight combinations. While not being a particularly efficient method, the heuristic weights were found by simply enumerating all possible combinations and observing which ones produced the best results. This was then repeated on a number of boards to see which values worked best on most boards.
 
-While not the most efficient method, such heuristic weights were found by simply enumerating all possible combinations and observing which ones produced the best results. 
+Part of the reason why this step took so long was that testing was based on the performance of the first method. This method was highly temperamental, and what weights worked well for one board, did not generally work as well on another. It was hypothesised that a dead-end could be typically resolved quite locally, and would only require to choose an alternate pathway from a few steps back to overcome the issue. Thus, backtracking was introduced to help overcome this problem, where the agent could move back a fixed number of steps and re-evaluate the nodes using a different set of heuristic weights. While this did help quite significantly, performance was still found to vary quite markedly from board to board.
 
+Dissatisfaction in the variability of performance was why the second method was authored, and in doing so, it was found that the sensitivity to what heuristic weights were used was greatly reduced.
+
+\section{Performance anlysis}
+The first method has no feedback, so the run-time of this method will vary from board to board, and can vary significantly from computer to computer. The worst-case running time for this algorithm is proportional to $O(k(b^n))$ where $b$ is the branching factor (4), $n$ is the lookahead depth limit (8) and $k$ is the number of tiles in the sequence. This corresponds to where a complete depth-first search to a depth 8 is required for each move of 8 steps.
+
+The second method does incorporate a feedback mechanism, so it will usually have a worst-case runtime of 5 moves/second, which is practically guaranteed when run on any modern computer. On computers which are not modern (e.g. Pentium 4 or lower; the computer that this was developed on), performance can fall below 5 moves/second.
+
+Multithreading was also introduced fairly late, but it did help to significantly increase the solving speed --- often by a factor of two, where the resources are available. This was achieved by splitting the game tree into 4 subtrees (by moving in the 4 directions) and searching each of the 4 subtrees in parallel. However, this design means that it will use at most 4 (logical) cores, and will often slightly under-utilise them, given that the game tree is not balanced.
+
+Memory consumption (space) is not a concern for either method. This is because they both use a depth first search, which has a space complexity of $O(bn)$. Additionally, the second method does not suffer from the memory issues of a conventional A* method as its node pool is fixed in size. Typically, the solver will use no more than 60MB of RAM.
+
+\section{Experimental results}
+%Insert fancy graphs, tables and charts PR FTW
 
 \chapter{Consideration of alternative solutions}
 
