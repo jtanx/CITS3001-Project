@@ -213,7 +213,8 @@ public class Threes {
   
   public static void usage() {
     System.out.println("CITS3001 Threes solver - 2014");
-    System.out.println("Usage: threes [-vsnd -l <i,j,k,l> -a <lookahead> -u <pq_sz> -i <ipq_sz> -q <qui_sz> -o <output_file> -m <moves_file>] input_file");
+    System.out.println("Usage: threes [-vsnd -l <i,j,k,l> -a <lookahead> -u <pq_sz> -i <ipq_sz>");
+    System.out.println("              -q <qui_sz> -o <output_file> -m <moves_file>] input_file");
     System.out.println("Options:");
     System.out.println("  -v Enables verbose output to stderr.");
     System.out.println("  -s Runs the solving algorithm in single-threaded mode.");
@@ -221,15 +222,15 @@ public class Threes {
     System.out.println("  -n DLDFS mode: Disables backtracking.");
     System.out.println("  -a <lookahead> Controls the lookahead. Default is 8 moves.");
     System.out.println("  -q <qui_sz> Changes the quiescence limit. Default is 11000.");
-    System.out.println("  -u <pq_sz> Changes the size limit of the main priority queue. Default is 150.");
-    System.out.println("  -i <ipq_sz> Changes the size limit of the individual priority queues. Default is 3.");
+    System.out.println("  -u <pq_sz> Change the size limit of the main priority queue. Default is 150.");
+    System.out.println("  -i <ipq_sz> Change the size limit of individual priority queues. Default is 3.");
     System.out.println("  -l <i,j,k,l> (Manual) learning mode. <i,j,k,l> specifies the inital weights");
     System.out.println("  -o <output_file> Writes the moves to the specified file.");
-    System.out.println("  -m <moves_file> Reads in a moves file to play the board (benchmarking purposes).");
+    System.out.println("  -m <moves_file> Reads a moves file to play the board (benchmarking purposes).");
     System.out.println();
     System.out.println("The output moves will always be printed to stdout.");
     System.out.println("Specifying a moves file with '-m' takes precedence over solving.");
-    System.out.println("Unless otherwise specified, options refer to when using priority search (default).");
+    System.out.println("Unless otherwise specified, options refer to using priority search(default).");
   }
   
   /**
