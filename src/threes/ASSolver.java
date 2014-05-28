@@ -23,7 +23,7 @@ public class ASSolver implements Solver{
   private static final int DEFAULT_LOOKAHEAD = 8;
   private static final int DEFAULT_PQ_SIZE = 200;
   private static final int DEFAULT_IPQ_SIZE = 2;
-  private static final int DEFAULT_QUI_SIZE = 11000;
+  private static final int DEFAULT_QUI_SIZE = 7000;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private static final int[] factors = {18,2,2,9}; //The best all-rounder
   private static final Board.Direction[] directions = {
@@ -83,7 +83,11 @@ public class ASSolver implements Solver{
    */
   private void lookahead_dfs(Board b, LimitedQueue<Board> ret, int depth) {
     if (depth >= lookahead_depth) {
-      ret.add(b);
+      if (b.finished()) {
+        updateBest(b);
+      } else {
+        ret.add(b);
+      }
       return;
     }
     
@@ -230,17 +234,6 @@ public class ASSolver implements Solver{
       LimitedQueue<T> ret = new LimitedQueue<>(comparator(), sizeLimit);
       Iterator<T> it = iterator();
       for (int i = 0; i < size() / 2 && it.hasNext(); i++) {
-        ret.add(it.next());
-      }
-      return ret;
-    }
-    
-    public LimitedQueue<T> dropHalfMiddle() {
-      LimitedQueue<T> ret = new LimitedQueue<>(comparator(), sizeLimit);
-      Iterator<T> it = iterator();
-      int i = 0;
-      while (i < size() / 3 && it.hasNext()) i++;
-      for (; i < (3 * size())/4 && it.hasNext(); i++) {
         ret.add(it.next());
       }
       return ret;
