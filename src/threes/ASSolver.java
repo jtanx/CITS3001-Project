@@ -47,7 +47,11 @@ public class ASSolver implements Solver{
     this.maxTime = (s.length / 5) * 1000000000L;
     this.BOARD_COMPARER = new BComparer();
     
-    log_info("No. of threads to be used: %d\n", nThreads);
+    log_info("Lookahead depth: %d", this.lookahead_depth);
+    log_info("Main PQ size: %d", this.pq_size);
+    log_info("Nominal individual PQ size: %d", this.ipq_size);
+    log_info("Quiescence limit: %d", this.qui_size);
+    log_info("No. of threads to be used: %d", nThreads);
     
     this.pq = new LimitedQueue<>(this.BOARD_COMPARER, this.pq_size);
   }
@@ -175,6 +179,7 @@ public class ASSolver implements Solver{
           nfbCounter = 0;
         } else {
           nFBestSame++;
+          //We're really getting nowhere, try cutting the PQ again
           if (nfbCounter % (pq_size * 5) == 0) {
             nfbCounter = 0;
           }

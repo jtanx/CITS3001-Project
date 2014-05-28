@@ -216,14 +216,14 @@ public class Threes {
     System.out.println("Usage: threes [-vsnd -l <i,j,k,l> -a <lookahead> -u <pq_sz> -i <ipq_sz>");
     System.out.println("              -q <qui_sz> -o <output_file> -m <moves_file>] input_file");
     System.out.println("Options:");
-    System.out.println("  -v Enables verbose output to stderr.");
+    System.out.println("  -v Enables verbose output to stderr. Highly recommended (else no progress).");
     System.out.println("  -s Runs the solving algorithm in single-threaded mode.");
     System.out.println("  -d Uses depth-limited depth-first search (DLDFS), instead of priority search.");
     System.out.println("  -n DLDFS mode: Disables backtracking.");
     System.out.println("  -a <lookahead> Controls the lookahead. Default is 8 moves.");
-    System.out.println("  -q <qui_sz> Changes the quiescence limit. Default is 11000.");
-    System.out.println("  -u <pq_sz> Change the size limit of the main priority queue. Default is 150.");
-    System.out.println("  -i <ipq_sz> Change the size limit of individual priority queues. Default is 4.");
+    System.out.println("  -q <qui_sz> Changes the quiescence limit. Default is 5000.");
+    System.out.println("  -u <pq_sz> Change the size limit of the main priority queue. Default is 200.");
+    System.out.println("  -i <ipq_sz> The nominal size of individual priority queues. Default is 2.");
     System.out.println("  -l <i,j,k,l> (Manual) learning mode. <i,j,k,l> specifies the inital weights");
     System.out.println("  -o <output_file> Writes the moves to the specified file.");
     System.out.println("  -m <moves_file> Reads a moves file to play the board (benchmarking purposes).");
@@ -231,6 +231,13 @@ public class Threes {
     System.out.println("The output moves will always be printed to stdout.");
     System.out.println("Specifying a moves file with '-m' takes precedence over solving.");
     System.out.println("Unless otherwise specified, options refer to using priority search(default).");
+    System.out.println();
+    System.out.println("The defaults have been chosen to produce the best results in reasonable time.");
+    System.out.println("Generally good results can be had very fast by reducing the lookahead, and");
+    System.out.println("increasing the quiscence limit and main priority queue size.");
+    System.out.println("E.g: threes -a 4 -u 300 -q 20000");
+    System.out.println("This will usually produce good results quickly (e.g ~100 moves/sec)");
+    
   }
   
   /**
