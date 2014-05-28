@@ -1,15 +1,7 @@
 package threes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.*;
+import java.util.concurrent.*;
 import threes.Board.Direction;
 import static threes.Threes.log_info;
 
@@ -39,17 +31,13 @@ public class DLDFSolver implements Solver {
   
   
   private final int[] factors = {18,2,2,9}; //The best all-rounder
-  private final int[] lb3factors = {18,1,2,13}; //Modified factors to continue after 18,2,2,9 fails for lb3
-  private final int[] lb1factorsb = {18,2,1,8}; //Continuation of longboard1 but with backtrack 6.
-  private final int[] nfactors = {18, 1, 5, 13}; //Found when testing for extension of medium-1 (900 moves ++)
-  private final int[] lowfactors = {18,0,0,9}; //Quite a pathological case: Lots of ones --> Maximise local combinability, don't care about anything else.
-  private final int[] lowfactors3 = {18,1,0,1}; 
-  private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 
-  //private final int[] lb3factors2 = {18,1,3,9};
-  //private final int[] lb3factors2 = {18,2,2,12};
+  private final int[] lb3factors = {18,1,2,13};
   private final int[] lb3factors2 = {18,3,2,13};
   private final int[] lb3factors3 = {18,2,1,6};
-  private final int[][] choicefactors = {factors, lb3factors, lb3factors2, lb3factors3, lowfactors, lowfactors3};//, lb1factorsb};//, nfactors, lowfactors3, lowfactors};
+  private final int[] lowfactors = {18,0,0,9}; 
+  private final int[] lowfactors3 = {18,1,0,1}; 
+  private final int[] closefactors = {18, 5, 10, 9}; //nc1 559 569 5610 
+  private final int[][] choicefactors = {factors, lb3factors, lb3factors2, lb3factors3, lowfactors, lowfactors3};
   private int[] currentfactors = choicefactors[0];
   
   public DLDFSolver(int[] s, int[] learning_startfactors, boolean singleThreaded, boolean useBacktracking) {
