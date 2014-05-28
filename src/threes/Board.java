@@ -385,6 +385,23 @@ public class Board {
   }
   
   @Override
+  public boolean equals(Object o) {
+    if (o != null && o instanceof Board) {
+      Board other = (Board) o;
+      return Arrays.equals(it, other.it) && (c_sequence == other.c_sequence);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 3;
+    hash = 61 * hash + Arrays.hashCode(this.it);
+    hash = 61 * hash + this.c_sequence;
+    return hash;
+  }
+  
+  @Override
   public String toString() {
     Formatter f = new Formatter();
     String nl = System.getProperty("line.separator");

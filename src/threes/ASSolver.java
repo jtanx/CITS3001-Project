@@ -4,6 +4,7 @@ package threes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
@@ -20,12 +21,11 @@ import static threes.Threes.log_info;
  */
 public class ASSolver implements Solver{
   private static final int DEFAULT_LOOKAHEAD = 8;
-  private static final int DEFAULT_PQ_SIZE = 150;
-  private static final int DEFAULT_IPQ_SIZE = 4;
+  private static final int DEFAULT_PQ_SIZE = 200;
+  private static final int DEFAULT_IPQ_SIZE = 2;
   private static final int DEFAULT_QUI_SIZE = 11000;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private static final int[] factors = {18,2,2,9}; //The best all-rounder
-  private static final int[] closefactors = {18, 5, 10, 9}; //Focus on combining more tiles
   private static final Board.Direction[] directions = {
     Board.Direction.LEFT, Board.Direction.UP, Board.Direction.RIGHT, Board.Direction.DOWN
   };
@@ -38,10 +38,10 @@ public class ASSolver implements Solver{
   }
   
   private final Comparator<Board> BOARD_COMPARER;
-  private final LimitedQueue<Board> pq;
+  private LimitedQueue<Board> pq;
   private final int[] tileSequence;
   private final long maxTime;
-  private final int nThreads, lookahead_depth, ipq_size, qui_size;
+  private final int nThreads, lookahead_depth, pq_size, ipq_size, qui_size;
   private Board fbest = null;
   private int fbest_score = -1;
   
@@ -50,6 +50,7 @@ public class ASSolver implements Solver{
     System.arraycopy(s, 0, tileSequence, 0, s.length);
     
     this.lookahead_depth = lookahead < 1 ? DEFAULT_LOOKAHEAD : lookahead;
+    this.pq_size = pq_size < 1 ? DEFAULT_PQ_SIZE : pq_size;
     this.ipq_size = ipq_size < 1 ? DEFAULT_IPQ_SIZE : ipq_size;
     this.qui_size = qui_size < 1 ? DEFAULT_QUI_SIZE : qui_size;
     this.nThreads = (singleThreaded || THREAD_COUNT == 1) ? 1 : THREAD_COUNT;
@@ -58,8 +59,7 @@ public class ASSolver implements Solver{
     
     log_info("No. of threads to be used: %d\n", nThreads);
     
-    pq_size = pq_size < 1 ? DEFAULT_PQ_SIZE : pq_size;
-    this.pq = new LimitedQueue<>(this.BOARD_COMPARER, pq_size);
+    this.pq = new LimitedQueue<>(this.BOARD_COMPARER, this.pq_size);
   }
   
   public ASSolver(int[] s) {
@@ -154,7 +154,7 @@ public class ASSolver implements Solver{
     ExecutorService pool = null;
     long start = System.nanoTime();
     Board prevFBest = null;
-    int nFBestSame = 0;
+    int nFBestSame = 0, nfbCounter = 0;
     fbest = null;
     fbest_score = -1;
     
@@ -166,8 +166,9 @@ public class ASSolver implements Solver{
     while (!pq.isEmpty()) {
       long runtime = System.nanoTime() - start;
       if (fbest != null) {
-        if (((fbest.nMoves() == tileSequence.length || runtime > maxTime) 
-                && nFBestSame >= 5) || nFBestSame >= qui_size) {
+        if (((runtime > maxTime) && nFBestSame >= 5) || 
+            (fbest.nMoves() == tileSequence.length && nFBestSame >= 50) ||
+            nFBestSame >= qui_size) {
           if (pool != null) {
             pool.shutdown();
           }
@@ -177,9 +178,20 @@ public class ASSolver implements Solver{
         if (fbest != prevFBest) {
           prevFBest = fbest;
           nFBestSame = 0;
+          nfbCounter = 0;
         } else {
           nFBestSame++;
+          if (nfbCounter % (pq_size * 4) == 0) {
+            nfbCounter = 0;
+          }
+          nfbCounter++;
         }
+      }
+      
+      if (nfbCounter == pq_size * 2) {
+        //Logic: If we're stuck, we might as well drop half the top and try from somewhere else...
+        log_info("DROP HALF");
+        pq = pq.dropHalf();
       }
       
       Board n = pq.pollLast();
@@ -192,7 +204,7 @@ public class ASSolver implements Solver{
       } else {
         lq = lookahead_ldfs(n);
       }
-      pq.addAll(lq);
+        pq.addAll(lq);
     }
     
     if (pool != null) {
@@ -212,6 +224,26 @@ public class ASSolver implements Solver{
     public LimitedQueue(Comparator<? super T> comparator, int sizeLimit) {
       super(comparator);
       this.sizeLimit = sizeLimit;
+    }
+
+    public LimitedQueue<T> dropHalf() {
+      LimitedQueue<T> ret = new LimitedQueue<>(comparator(), sizeLimit);
+      Iterator<T> it = iterator();
+      for (int i = 0; i < size() / 2 && it.hasNext(); i++) {
+        ret.add(it.next());
+      }
+      return ret;
+    }
+    
+    public LimitedQueue<T> dropHalfMiddle() {
+      LimitedQueue<T> ret = new LimitedQueue<>(comparator(), sizeLimit);
+      Iterator<T> it = iterator();
+      int i = 0;
+      while (i < size() / 3 && it.hasNext()) i++;
+      for (; i < (3 * size())/4 && it.hasNext(); i++) {
+        ret.add(it.next());
+      }
+      return ret;
     }
     
     @Override
@@ -243,17 +275,11 @@ public class ASSolver implements Solver{
    */
   private class BComparer implements Comparator<Board> {
     private int evaluate(Board b) {
-      int[] thefactors = factors;
-
-      //We are close to the end of the sequence! Use different weights!
-      if (b.nMoves() + lookahead_depth * 2 >= tileSequence.length) {
-        thefactors = closefactors;
-      }
       return ((int)Math.pow(4, b.dof())) + 
-             thefactors[0] * b.zeros() + 
-             thefactors[1] * b.checkerboarding3() + 
-             thefactors[2] * b.smoothness() + 
-             thefactors[3] * b.nCombinable();
+             factors[0] * b.zeros() + 
+             factors[1] * b.checkerboarding3() + 
+             factors[2] * b.smoothness() + 
+             factors[3] * b.nCombinable();
     }
 
     @Override
