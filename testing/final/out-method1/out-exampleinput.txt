@@ -1,0 +1,3 @@
+773, 4, 9, -18, -2, 0
+Used 32/32 available moves in 0.94 seconds. (34.08 m/s)
+UDDDLDLLULLRLDDDLLLUDLRRUDLRRDDL
