@@ -181,7 +181,7 @@ public class ASSolver implements Solver{
           nfbCounter = 0;
         } else {
           nFBestSame++;
-          if (nfbCounter % (pq_size * 4) == 0) {
+          if (nfbCounter % (pq_size * 5) == 0) {
             nfbCounter = 0;
           }
           nfbCounter++;
