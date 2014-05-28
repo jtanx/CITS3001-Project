@@ -13,7 +13,7 @@ public class ASSolver implements Solver{
   private static final int DEFAULT_LOOKAHEAD = 8;
   private static final int DEFAULT_PQ_SIZE = 200;
   private static final int DEFAULT_IPQ_SIZE = 2;
-  private static final int DEFAULT_QUI_SIZE = 7000;
+  private static final int DEFAULT_QUI_SIZE = 5000;
   private static final int BOARD_WIDTH = Board.BOARD_WIDTH;
   private static final int[] factors = {18,2,2,9}; //The best all-rounder
   private static final Board.Direction[] directions = {
@@ -102,14 +102,14 @@ public class ASSolver implements Solver{
    * @param pool The thread pool in which to submit jobs to
    * @return A LimitedQueue containing the top MAX_QUEUE_SIZE nodes
    */
-  private LimitedQueue<Board> lookahead_pdfs(Board b, ExecutorService pool) {
+  private LimitedQueue<Board> lookahead_pdfs(Board b, int size, ExecutorService pool) {
     List<Future<LimitedQueue<Board>>> rets = new ArrayList<>();
-    LimitedQueue<Board> fret = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
+    LimitedQueue<Board> fret = new LimitedQueue<>(BOARD_COMPARER, size);
     
     for (Direction d : directions) {
       Board n = new Board(b);
       if (n.move(tileSequence, d)) {
-        rets.add(pool.submit(new ParallelDFS(n)));
+        rets.add(pool.submit(new ParallelDFS(n, size)));
       }
     }
     
@@ -131,8 +131,8 @@ public class ASSolver implements Solver{
    * @param b The board position to search from
    * @return A LimitedQueue containing the top MAX_QUEUE_SIZE nodes
    */
-  private LimitedQueue<Board> lookahead_ldfs(Board b) {
-    LimitedQueue<Board> lq = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
+  private LimitedQueue<Board> lookahead_ldfs(Board b, int size) {
+    LimitedQueue<Board> lq = new LimitedQueue<>(BOARD_COMPARER, size);
     lookahead_dfs(b, lq, 0);
     return lq;
   }
@@ -161,7 +161,7 @@ public class ASSolver implements Solver{
       long runtime = System.nanoTime() - start;
       if (fbest != null) {
         if (((runtime > maxTime) && nFBestSame >= 5) || 
-            (fbest.nMoves() == tileSequence.length && nFBestSame >= 50) ||
+            (fbest.nMoves() == tileSequence.length && nFBestSame >= (qui_size / 40)) ||
             nFBestSame >= qui_size) {
           if (pool != null) {
             pool.shutdown();
@@ -193,10 +193,12 @@ public class ASSolver implements Solver{
       log_info(n);
       
       LimitedQueue<Board> lq;
+      //If the priority queue is not full (< 45%), fill it fast.
+      int size = (100 * pq.size()) / pq_size < 45 ? 20 : ipq_size;
       if (nThreads > 1) {
-        lq = lookahead_pdfs(n, pool);
+        lq = lookahead_pdfs(n, size, pool);
       } else {
-        lq = lookahead_ldfs(n);
+        lq = lookahead_ldfs(n, size);
       }
         pq.addAll(lq);
     }
@@ -277,9 +279,9 @@ public class ASSolver implements Solver{
     private final Board input;
     private final LimitedQueue<Board> lq;
     
-    public ParallelDFS(Board b) {
+    public ParallelDFS(Board b, int size) {
       this.input = b;
-      this.lq = new LimitedQueue<>(BOARD_COMPARER, ipq_size);
+      this.lq = new LimitedQueue<>(BOARD_COMPARER, size);
     }
 
     @Override
