@@ -28,10 +28,10 @@ public class ASSolver implements Solver{
   }
   
   private final Comparator<Board> BOARD_COMPARER;
-  private LimitedQueue<Board> pq;
   private final int[] tileSequence;
   private final long maxTime;
   private final int nThreads, lookahead_depth, pq_size, ipq_size, qui_size;
+  private LimitedQueue<Board> pq;
   private Board fbest = null;
   private int fbest_score = -1;
   
@@ -60,6 +60,11 @@ public class ASSolver implements Solver{
     this(s, true, -1, -1, -1, -1);
   }
   
+  /**
+   * This needs to be synchronised as multiple threads could
+   * potentially be trying to update the best (finished) board.
+   * @param b The candidate board
+   */
   private synchronized void updateBest(Board b) {
     int score = b.score();
     if (score > fbest_score) {

@@ -55,9 +55,11 @@ public class Board {
   
   /** The board (flat representation) */
   private int[] it;
+  /** Which tile number are we up to in the sequence */
   private int c_sequence;
+  /** Are we finished? */
   private boolean finished;
-  private int depth;
+  /** The path that we've followed so far */
   private StringBuilder path;
   
   public Board(int[] board) {
@@ -72,7 +74,6 @@ public class Board {
     this.it = Arrays.copyOf(o.it, o.it.length);
     this.c_sequence = o.c_sequence;
     this.finished = o.finished;
-    this.depth = o.depth;
     this.path = new StringBuilder(o.path);
   }
   
