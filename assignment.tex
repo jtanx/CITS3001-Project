@@ -330,7 +330,26 @@ It should be quite clear that while method 1 has a fairly consistent speed, it f
 
 Quite surprisingly, method 2 performs unexpectedly well even with a low lookahead, as seen in Table~\ref{tab:results-method2-modded}. In fact, using these settings, it is on average 12 times faster than with default settings, and produces exactly the same results, except for two cases --- \texttt{longboard-2.txt} and \texttt{longboard-3.txt}. For \texttt{longboard-2.txt}, it still uses 4000/4000 tiles, but scores one point less, which is a practically negligible difference. For \texttt{longboard-3.txt}, the difference in score is more apparent, but it still manages to outperform method 1 at almost 10 times the speed.
 
+\begin{figure}[H]
+	\centering
+	\resizebox{0.8\textwidth}{!}{\import{figures/}{figure_1.pgf}}
+	\caption{A plot comparing the running speed to the lookahead depth (method 2).}
+	\label{fig:lookahead_speed}
+\end{figure}
 
+\begin{figure}[H]
+	\centering
+	\resizebox{0.8\textwidth}{!}{\import{figures/}{figure_2.pgf}}
+	\caption{A plot comparing the tile usage to the lookahead depth for boards where it varied.}
+	\label{fig:lookahead_tileusage}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\resizebox{\textwidth}{!}{\import{figures/}{figure_3.pgf}}
+	\caption{A plot comparing the score to the lookahead depth.}
+	\label{fig:lookahead_score}
+\end{figure}
 
 \chapter{Potential areas for improvement}
 
