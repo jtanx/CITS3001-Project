@@ -55,6 +55,7 @@
 %Tables
 \usepackage{float}
 \usepackage{caption}
+\usepackage{tablefootnote}
 \captionsetup[table]{skip=7pt}
 
 %Headings
@@ -233,17 +234,15 @@ Multi-threading was also introduced fairly late, but it did help to significantl
 Memory usage is not a concern for either method, as they both use a depth first search which has a space complexity of $O(bn)$. Additionally, the second method does not suffer from the memory issues of A* as its node pool is fixed in size. Typically, the solver will use no more than 200MB of RAM.
 
 \section{Experimental results}
-Experimentation was primarily conducted on the Undergraduate CSSE SSH server (GP05), which has an Intel Xeon E5-2640 (2.50GHz) and 2GB of usable RAM. As enforced by the server, CPU utilisation was restricted to two cores.
-
-In testing, the second method was consistently on-par or better than the first, which is to be expected, since it considers more than just one path as suggested by the heuristic. Perhaps the only benefit to the first method is that it is fast (typically in excess of 50 moves/second), but the second method can be configured to run fast by lowering the lookahead. Irregardless, the second method is used by default, with the first usable only by explicit command. The first method was retained simply because a lot of time was spent on this option, and the second method was only added quite late into the project.
+Experimentation was conducted on the Undergraduate CSSE SSH server (GP05), which has an Intel Xeon E5-2640 (2.50GHz) and 2GB of usable RAM. As enforced by the server, CPU utilisation was restricted to two cores.
 
 For both methods, it is typical to expect it to solve to at least 1000 moves, but this is notwithstanding boards where it is particularly difficult to select good moves. In cases where the tile sequence is unfavourable, it may be found that it will solve no more than 200 moves. Such boards are ones where there is a very high proportion of low valued (1 or 2) tiles, and where such tiles occur in long sequences that makes them uncombinable. The presence of such uncombinable tiles severely limits the performance of the solver, as they quickly fill the board and do not significantly contribute to its score.
 
 However, on boards where the tile sequence is favourable (easily combinable), it has been shown that this solver can continue for many thousands of moves quite easily. The second method in particular will usually run sequences to completion or near completion when possible. It should be noted that any agent will not perform well if a long sequence of uncombinable tiles occurs. 
 
-\subsection{Test boards}
-Testing was conducted on a number of boards, including those with both short and long tile sequences.
+Irregardless, the second method is used by default, with the first usable only by explicit command. The first method was retained simply because a lot of time was spent on this option, and the second method was only added quite late into the project.
 
+\subsection{Test boards}
 \begin{table}[H]
   \centering
   \caption{The test boards used}
@@ -257,31 +256,15 @@ Testing was conducted on a number of boards, including those with both short and
     \texttt{short-range.txt} & 500   & 1     & 10    & 116   & 43.0  & 41.6  & 7.8   & 4.8   & 2.8   & -- \\
     \texttt{medium-range.txt} & 1000  & 1     & 7     & 340   & 46.2  & 45.7  & 3.9   & 4.7   &  --     & -- \\
     \texttt{long-range.txt} & 2000  & 1     & 8     & 1947  & 40.4  & 40.7  & 7.5   & 4.2   & 3.6   & 3.5 \\
-    \texttt{longboard-1.txt} & 20000 & 1     & 9     & 3727  & 40.1  & 40.1  & 9.8   & 3.2   & 3.3   & 3.4 \\
-    \texttt{longboard-2.txt} & 4000  & 2     & 6     & 3109  & 33.4  & 33.3  & 33.3  &  --     &  --     & -- \\
-    \texttt{longboard-3.txt} & 20000 & 4     & 2     & 82    & 40.0  & 40.0  & 9.9   & 3.4   & 3.4   & 3.3 \\
+    \texttt{longboard-1.txt}\tablefootnote{Also known as \texttt{evan.in} \cite{help3001-boards}} & 20000 & 1     & 9     & 3727  & 40.1  & 40.1  & 9.8   & 3.2   & 3.3   & 3.4 \\
+    \texttt{longboard-2.txt}\tablefootnote{Also known as \texttt{ridge.in} \cite{help3001-boards}} & 4000  & 2     & 6     & 3109  & 33.4  & 33.3  & 33.3  &  --     &  --     & -- \\
+    \texttt{longboard-3.txt}\tablefootnote{Also known as \texttt{eliot.in} \cite{help3001-boards}} & 20000 & 4     & 2     & 82    & 40.0  & 40.0  & 9.9   & 3.4   & 3.4   & 3.3 \\
     \hline
     \end{tabular}%
   \label{tab:test-boards}%
 \end{table}%
 
-With these boards, three primary tests were conducted - one using method 1, one using method 2 with default settings, and one using method 2 with faster settings. It should be noted that method 2 is highly user configurable, with options affecting the final result achieved and the speed at which a result is produced. The options are described below.
-
-\begin{table}[H]
-  \centering
-  \caption{A list of user-configurable options for method 2}
-    \begin{tabularx}{\textwidth}{lX}
-    \hline
-    Command & Description \\
-    \hline
-    \texttt{-a <n>} & Controls the lookahead depth. The default value is 8, which produces the best results overall in a reasonable time. Lesser depths (e.g. n=4) increases the speed by an order magnitude and the results generally remain good too.  \\
-    \texttt{-q <n>} & Controls the 'quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
-    \texttt{-u <n>} & Controls the size of the main priority queue. The default value is 200, and should be increased (to about 300) for depths less than 8. Increasing this too much may cause the solver to get stuck examining lower valued boards instead of continuing. \\
-    \texttt{-i <n>} & Controls the nominal size of individual priority queues. In essence, it controls how many nodes are added to the main queue after each iteration of lookahead/evaluation. The default value is 2, and in general does not need to be changed. This value is nominal, as when the main queue is nearly empty, the size is automatically increased to populate the main queue quickly. \\
-    \hline
-    \end{tabularx}%
-  \label{tab:method2-parameters}%
-\end{table}%
+With these boards, three primary tests were conducted --- one using method 1, one using method 2 with default settings, and one using method 2 with faster settings. Method 2 is highly user configurable (see Appendix~\ref{appendix-manual}), with options affecting the final result achieved and the speed at which a result is produced.
 
 \begin{table}[H]
   \centering
@@ -343,11 +326,43 @@ With these boards, three primary tests were conducted - one using method 1, one 
   \label{tab:results-method2-modded}%
 \end{table}%
 
+It should be quite clear that while method 1 has a fairly consistent speed, it fails to perform well in all situations. The second method produces much better results in that it is consistently able to use more tiles and continue further than method 1. Method 2 does tend to run slower on boards with low tile counts (e.g. \texttt{exampleinput.txt}), or boards where it gets stuck (e.g. \texttt{long-range.txt}), but the effect of the feedback system is shown, where the minimal speed is around 5 moves/second.
 
+Quite surprisingly, method 2 performs unexpectedly well even with a low lookahead, as seen in Table~\ref{tab:results-method2-modded}. In fact, using these settings, it is on average 12 times faster than with default settings, and produces exactly the same results, except for two cases --- \texttt{longboard-2.txt} and \texttt{longboard-3.txt}. For \texttt{longboard-2.txt}, it still uses 4000/4000 tiles, but scores one point less, which is a practically negligible difference. For \texttt{longboard-3.txt}, the difference in score is more apparent, but it still manages to outperform method 1 at almost 10 times the speed.
 
 
 
 \chapter{Potential areas for improvement}
+
+%Appendix
+%---------------------------------------------------------
+\begin{appendices}
+%Override issues with using appendix with titlesec
+\renewcommand{\chaptername}{Appendix}
+\renewcommand{\chaptermark}[1]{\markboth{\chaptername~\thechapter~~#1}{}}
+\titleformat{\chapter}
+	{\normalfont\LARGE\bfseries}{\chaptername~\thechapter.}{0.8em}{}
+%---------------------------------------------------------
+
+\chapter{Solver documentation}\label{appendix-manual}
+
+\begin{table}[H]
+  \centering
+  \caption{A list of user-configurable options for method 2}
+    \begin{tabularx}{\textwidth}{lX}
+    \hline
+    Command & Description \\
+    \hline
+    \texttt{-a <n>} & Controls the lookahead depth. The default value is 8, which produces the best results overall in a reasonable time. Lesser depths (e.g. n=4) increases the speed by an order magnitude and the results generally remain good too.  \\
+    \texttt{-q <n>} & Controls the 'quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibilities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
+    \texttt{-u <n>} & Controls the size of the main priority queue. The default value is 200, and should be increased (to about 300) for depths less than 8. Increasing this too much may cause the solver to get stuck examining lower valued boards instead of continuing. \\
+    \texttt{-i <n>} & Controls the nominal size of individual priority queues. In essence, it controls how many nodes are added to the main queue after each iteration of lookahead/evaluation. The default value is 2, and in general does not need to be changed. This value is nominal, as when the main queue is nearly empty, the size is automatically increased to populate the main queue quickly. \\
+    \hline
+    \end{tabularx}%
+  \label{tab:method2-parameters}%
+\end{table}%
+
+\end{appendices}
 
 %---------------------------------------------------------
 %Referencing
