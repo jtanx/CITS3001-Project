@@ -26,3 +26,6 @@
 build/
 nbproject/private/
 /dist/
+
+#Project cruft
+BINARIES/
