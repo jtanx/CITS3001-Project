@@ -7,6 +7,9 @@ import java.util.List;
 
 /**
  * Game mechanics of our version of Threes!
+ * If the code looks a bit weird or un-Java like, it's because it
+ * was originally written in C, before deciding that was too much
+ * effort and being ported to Java.
  * @author Jeremy Tan, 20933708
  */
 public class Board {
