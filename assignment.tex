@@ -231,7 +231,7 @@ The second method does incorporate a feedback mechanism, so it will usually have
 
 Multi-threading was also introduced fairly late, but it did help to significantly increase the solving speed --- often by a factor of two, where the resources are available. This was achieved by splitting the game tree into 4 subtrees (by moving in the 4 directions) and searching each of the 4 subtrees in parallel. However, this design means that it will use at most 4 (logical) cores, and will often slightly under-utilise them, given that the game tree is not balanced.
 
-Memory usage is not a concern for either method, as they both use a depth first search which has a space complexity of $O(bn)$. Additionally, the second method does not suffer from the memory issues of A* as its node pool is fixed in size. Typically, the solver will use no more than 200MB of RAM.
+Memory usage is not a concern for either method, as they both use a depth first search which has a space complexity of $O(bn)$. Additionally, the second method does not suffer from the memory issues of A* as its node pool is fixed in size. Typically, the solver will use no more than 400MB of RAM.
 
 \section{Experimental results}
 Experimentation was conducted on the Undergraduate CSSE SSH server (GP05), which has an Intel Xeon E5-2640 (2.50GHz) and 2GB of usable RAM. As enforced by the server, CPU utilisation was restricted to two cores.
@@ -351,7 +351,35 @@ Quite surprisingly, method 2 performs unexpectedly well even with a low lookahea
 	\label{fig:lookahead_score}
 \end{figure}
 
+For these graphs, the solver was run with the following settings:
+\begin{itemize}
+	\singlespacing
+	\item For lookahead \texttt{x} in range 1-5: \texttt{-a x -u 220 -q 30000}
+	\item For lookahead \texttt{x} in range 6-7: \texttt{-a x -u 220 -q 20000}
+	\item For lookahead of 8 (default): No options
+	\onehalfspacing
+\end{itemize}
+
+What is quite apparent is that the lookahead has a minimal effect on the end result, except for those with very long tile sequences (i.e. in excess of 10,000 pieces). As seen in Figure~\ref{fig:lookahead_speed}, the solving speed decreases by orders of magnitude as the lookahead is increased (the y-axis is logarithmic). This suggests that it is better to use a lower lookahead to quickly gauge how many moves a board can be solved for, before using a higher lookahead to get the best results. 
+
+In conclusion, method 2 should always be used over method 1, and the lookahead depth used by method 2 can be safely dropped to increase speed, with minimal effect on the final result. 
+
 \chapter{Potential areas for improvement}
+Over the course of development there were several key areas that could have been further refined to get better results.
+
+\begin{itemize}
+	\item Both methods do not make use of caching, and must generate the game tree again if it needs to re-search part of it (backtracking)
+	\item Visited nodes are not kept track of, which leads to re-evaluation of nodes when the solver is stalled (method 2)
+	\item When method 2 gets stalled, it tends to explore all nodes close to the stall point first, instead of backtracking further to a point where it is more likely to get out of the stall. As the queue size is restricted, this behaviour can tend to `flood-out' the queue with nodes too close to the stall, making it impossible to get past it. 
+	
+	At present, this is partially limited by the behaviour of simply dropping the top half of the queue of nodes to explore, if it is detected that the solver is stalled. However, this is a `dumb' method, as it doesn't explicitly consider which node would be best to backtrack to.
+	\item The depth limited search used for lookahead has a fixed cutoff based on the depth of exploration only. A better implementation would also consider the board state to determine if more or less searching is required (variable cutoff).
+	\item The heuristics used and their weights may need tweaking to get better results. One way this could be achieved is to consider the determination of heuristic weights as a mathematical optimisation problem, with the goal being to maximise the final score. Multiple optimisation algorithms exist to solve such a problem\cite{scipy-optimisation}.
+	\item The backing data structure of the size-limited priority queues is a balanced binary tree (TreeSet), which allows for the ordering of elements and $O(log(n))$ performance to add and remove any of its elements. This means that least-valued nodes can be easily pruned (i.e. the tail-end of the queue) to maintain a fixed size. However, elements in the middle cannot be easily accessed without knowing in advance what is currently there. This prevents efficient backtracking to elements further down the queue if a stall occurs.
+	\item Profiling\footnote{See Appendix~\ref{appendix-profiling}} the solver seems to suggest that most of the memory usage is from copying the string of moves made with each new board. If memory usage was a concern, a smarter method of keeping track of the moves made may be of use.
+	\item Additional profiling suggests that most of the calculation time is spent in either copying the boards (initialisation of the moves string) or updating of the priority queue (TreeSet). Targeting these areas, alternative data structures and/or alternative methods may help to increase performance.
+\end{itemize}
+
 
 %Appendix
 %---------------------------------------------------------
@@ -364,22 +392,57 @@ Quite surprisingly, method 2 performs unexpectedly well even with a low lookahea
 %---------------------------------------------------------
 
 \chapter{Solver documentation}\label{appendix-manual}
+The solver is written in Java, and requires the Java runtime version 7 or later to function. On most platforms, the usual way to call the program is with:
+\begin{lstlisting}
+        java -jar threes.jar [options] input_file.txt
+\end{lstlisting}
+
+On Windows, a convenience launcher exists, such that it can be called by:
+\begin{lstlisting}
+        Threes.exe [options] input_file.txt
+\end{lstlisting}
+
+The output moves file is always written to \texttt{stdout}. All other messages should be written to \texttt{stderr}.
 
 \begin{table}[H]
   \centering
-  \caption{A list of user-configurable options for method 2}
+  \caption{A list of user-configurable options}
     \begin{tabularx}{\textwidth}{lX}
     \hline
     Command & Description \\
     \hline
+    \texttt{-v} & Enables verbose output to \texttt{stderr}. Highly recommended, as it shows the progress and state of the solver at any one time. \\
+    \texttt{-s} & Switches to single-threaded mode. May be useful if multi-threading causes issues (it shouldn't). \\
+    \texttt{-d} & Switches to using method 1 as the solving algorithm. \\
+    \texttt{-n} & Disables backtracking in method 1. \\
+    \texttt{-l <i,j,k,l>} & Enables `learning' mode, which uses method 1 as the solver for the input board. It iterates over all possible heuristic weights and repeatedly solves the board. Results are displayed so that the user can see what weights work well. The four comma separated integer values, \texttt{i,j,k,l} indicate the starting weights. \\
     \texttt{-a <n>} & Controls the lookahead depth. The default value is 8, which produces the best results overall in a reasonable time. Lesser depths (e.g. n=4) increases the speed by an order magnitude and the results generally remain good too.  \\
-    \texttt{-q <n>} & Controls the 'quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibilities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
-    \texttt{-u <n>} & Controls the size of the main priority queue. The default value is 200, and should be increased (to about 300) for depths less than 8. Increasing this too much may cause the solver to get stuck examining lower valued boards instead of continuing. \\
+    \texttt{-u <n>} & Controls the main priority queue size. The default is 200, and should be increased (to about 300) for depths less than 8. Increasing this too much may cause it to get stuck examining lower valued boards instead of continuing. \\
     \texttt{-i <n>} & Controls the nominal size of individual priority queues. In essence, it controls how many nodes are added to the main queue after each iteration of lookahead/evaluation. The default value is 2, and in general does not need to be changed. This value is nominal, as when the main queue is nearly empty, the size is automatically increased to populate the main queue quickly. \\
+    \texttt{-q <n>} & Controls the 'quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibilities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
+    \texttt{-o <output\_file>} & In addition to writing the output to \texttt{stdout}, the output will also be written to the specified output file. \\
+    \texttt{-m <moves\_file>} & Reads in the moves file and plays that board repeatedly. For benchmarking purposes only. \\
     \hline
     \end{tabularx}%
   \label{tab:method2-parameters}%
 \end{table}%
+
+\chapter{Profiling the application in NetBeans}\label{appendix-profiling}
+This profiling was conducted using NetBeans 7.4 with JRE version 1.7 on the lab computers in CSSE 2.03.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{figures/Speed-profiling.png}
+	\caption{Speed profiling reveals the breakdown of CPU time spent in each method.}
+	\label{fig:speed-profiling}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{figures/Memory-profiling.png}
+	\caption{Memory profiling reveals the breakdown of memory allocation.}
+	\label{fig:speed-profiling}
+\end{figure}
 
 \end{appendices}
 
