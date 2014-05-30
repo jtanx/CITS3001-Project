@@ -440,7 +440,7 @@ PQ Size: 199 (0)
 
 \begin{itemize}
 \item At line 1: \texttt{199} indicates that the main priority queue currently holds 199 candidate boards. The bracketed number, \texttt{(0)}, indicates the number of times that the current best solution has not changed from. If this number increases from 0, it usually indicates that the solver `stalled' and had to backtrack to try an alternate pathway. If this number reaches the quiescence limit, then solving will halt and the current best solution is returned.
-\item At line 2: The first number, \texttt{88635)}, indicates the board score of the board currently being explored. The bracketed number, \texttt{(1032)} indicates the number of moves that has been made so far for the current board. 
+\item At line 2: The first number, \texttt{88635}, indicates the board score of the board currently being explored. The bracketed number, \texttt{(1032)} indicates the number of moves that has been made so far for the current board. 
 \item Lines 3-6: The current board state.
 \end{itemize}
 
@@ -458,7 +458,7 @@ This profiling was conducted using NetBeans 7.4 with JRE version 1.7 on the lab 
 	\centering
 	\includegraphics[width=0.85\textwidth]{figures/Memory-profiling.png}
 	\caption{Memory profiling reveals the breakdown of memory allocation.}
-	\label{fig:speed-profiling}
+	\label{fig:memory-profiling}
 \end{figure}
 
 \end{appendices}
