@@ -427,6 +427,23 @@ The output moves file is always written to \texttt{stdout}. All other messages s
   \label{tab:method2-parameters}%
 \end{table}%
 
+\section{An explanation of the verbose output}
+When run in verbose mode, the output will typically look something like this:
+\begin{lstlisting}
+PQ Size: 199 (0)
+88635 (1032)
+ 12   0   1   2
+  6  12  24  48
+  6  12 192 768
+  1  96 384 1536
+\end{lstlisting}
+
+\begin{itemize}
+\item At line 1: \texttt{199} indicates that the main priority queue currently holds 199 candidate boards. The bracketed number, \texttt{(0)}, indicates the number of times that the current best solution has not changed from. If this number increases from 0, it usually indicates that the solver `stalled' and had to backtrack to try an alternate pathway. If this number reaches the quiescence limit, then solving will halt and the current best solution is returned.
+\item At line 2: The first number, \texttt{88635)}, indicates the board score of the board currently being explored. The bracketed number, \texttt{(1032)} indicates the number of moves that has been made so far for the current board. 
+\item Lines 3-6: The current board state.
+\end{itemize}
+
 \chapter{Profiling the application in NetBeans}\label{appendix-profiling}
 This profiling was conducted using NetBeans 7.4 with JRE version 1.7 on the lab computers in CSSE 2.03.
 
