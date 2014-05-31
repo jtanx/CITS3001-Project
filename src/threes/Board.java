@@ -132,7 +132,7 @@ public class Board {
   }
   
   public String moves() {
-    return path.toString();
+    return path == null ? "" : path.toString();
   }
   
   /**
