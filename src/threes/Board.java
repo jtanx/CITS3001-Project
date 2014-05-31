@@ -23,14 +23,20 @@ public class Board {
   };
   
   public enum Direction {
-    LEFT("L"),
-    RIGHT("R"),
-    UP("U"),
-    DOWN("D");
+    LEFT("L", 'L'),
+    RIGHT("R", 'R'),
+    UP("U", 'U'),
+    DOWN("D", 'D');
     
-    private String t;
-    private Direction(String t) {
+    private final String t;
+    private final char c;
+    private Direction(String t, char c) {
       this.t = t;
+      this.c = c;
+    }
+    
+    public char toChar() {
+      return c;
     }
     
     @Override public String toString() {
@@ -63,21 +69,20 @@ public class Board {
   /** Are we finished? */
   private boolean finished;
   /** The path that we've followed so far */
-  private StringBuilder path;
+  private Move path;
   
   public Board(int[] board) {
     if (board.length != BOARD_SPACE) {
       throw new IllegalArgumentException("Invalid input board size");
     }
     it = Arrays.copyOf(board, board.length);
-    path = new StringBuilder();
   }
   
   public Board(Board o) {
     this.it = Arrays.copyOf(o.it, o.it.length);
     this.c_sequence = o.c_sequence;
     this.finished = o.finished;
-    this.path = new StringBuilder(o.path);
+    this.path = o.path;
   }
   
   private static boolean shift_valid(int from, int to) {
@@ -123,7 +128,6 @@ public class Board {
   }
   
   public int nMoves() {
-    assert(path.length() == c_sequence);
     return c_sequence;
   }
   
@@ -187,8 +191,9 @@ public class Board {
         seq_rows >>= 1; j++;
       }
       
-      it[seq_trn[j]] = s[c_sequence++];      
-      path.append(d);
+      it[seq_trn[j]] = s[c_sequence++];
+      //Append to the path
+      path = new Move(path, d);
       if (c_sequence >= s.length || dof() == 0) {
         finished = true;
       }
@@ -419,5 +424,28 @@ public class Board {
     }
     
     return f.toString();
+  }
+  
+  private static class Move {
+    private final Move previous;
+    private final char direction;
+    
+    public Move(Move previous, Direction d) {
+      this.previous = previous;
+      this.direction = d.toChar();
+    }
+    
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      Move it = this;
+      
+      while (it != null) {
+        sb.append(it.direction);
+        it = it.previous;
+      }
+      sb.reverse();
+      return sb.toString();
+    }
   }
 }
