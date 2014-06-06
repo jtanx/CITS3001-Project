@@ -174,7 +174,7 @@ The second useful heuristic of ``smoothness'' was also important, but to a somew
 \subsection{Common player strategies}
 In final consideration were the common strategies\cite{threes-strategies} players used to maximise their score. Apart from that already discussed, additional suggestions involved maximising the degrees of freedom (how many directions you can move in), and using the `corner' strategy of keeping large valued tiles in one corner. 
 
-In general, it was found that the degrees of freedom at any board state did not change from four until you were about to approach a terminal state. This meant that the degrees of freedom was a good measure of when a board state was `bad', and should, if possible, be avoided. Although not intentional, the smoothness heuristic used also enforced the `corner strategy', as previously mentioned in section~\ref{2048-solver}.
+In general, it was found that the degrees of freedom at any board state did not change from four until you were about to approach a terminal state. This meant that the degrees of freedom was a good measure of when a board state was `bad', and should, if possible, be avoided. Although not intentional, the smoothness heuristic used also enforced the `corner strategy', as previously mentioned in Section~\ref{2048-solver}.
 
 %-------------------------Candidate solutions----------------------
 
@@ -190,12 +190,12 @@ Informed search strategies, such as A* were also considered to be possible, and 
 For both informed and uninformed search strategies, versions with more restricted memory usage (e.g. IDFS, SMA*, IDA*) could be used to overcome concerns over excessive memory usage.
 
 \chapter{Implementation details}
-The final solution implements two differing methods, with the first\footnote{This shall henceforth be referred to as `the first method' or `method 1'} being a simple greedy algorithm that chooses the next best move according to some evaluation function, in combination with a fixed lookahead and some measure of backtracking. The second method\footnote{This shall henceforth be referred to as `the second method' or `method 2'} can be described as an augmented version of the first implementation, and is closer in description to the A* algorithm. In particular, it maintains a \emph{fixed size} set of the most promising board states, where they are ordered by their $f$ value (in A* terminology), which is the sum of their heuristic evaluation and cost function (the number of moves made). As with the first method, this still expands the most promising node first, but the set of nodes that it maintains means that it can try alternate pathways much more flexibly when a dead-end occurs.
+The final solution implements two differing methods, with the first\footnote{This shall henceforth be referred to as `the first method' or `Method 1'} being a simple greedy algorithm that chooses the next best move according to some evaluation function, in combination with a fixed lookahead and some measure of backtracking. The second method\footnote{This shall henceforth be referred to as `the second method' or `Method 2'} can be described as an augmented version of the first implementation, and is closer in description to the A* algorithm. In particular, it maintains a \emph{fixed size} set of the most promising board states, where they are ordered by their $f$ value (in A* terminology), which is the sum of their heuristic evaluation and cost function (the number of moves made). As with the first method, this still expands the most promising node first, but the set of nodes that it maintains means that it can try alternate pathways much more flexibly when a dead-end occurs.
 
 Both methods do not guarantee that \emph{the} optimal solution to be found, but it does usually find \emph{a} good solution. This is because both methods don't explore the full game tree, and depend quite heavily on the heuristic function to guide the algorithm in the correct direction. Further expanding on this, it can be seen why the second method is not an implementation of A* --- it only maintains a fixed size pool of unexplored nodes, and the heuristic used is not admissible.
 
 \section{Determination of heuristics to be used}
-Discerning which heuristics to use was difficult. As previously discussed in section~\ref{section:prior-work}, prior work helped immensely to create useful heuristics. In any case, this process still required a fair amount of trial-and-error by simply observing what would happen if a particular heuristic was used. Over the course of this process, the following heuristics were considered:
+Discerning which heuristics to use was difficult. As previously discussed in Section~\ref{section:prior-work}, prior work helped immensely to create useful heuristics. In any case, this process still required a fair amount of trial-and-error by simply observing what would happen if a particular heuristic was used. Over the course of this process, the following heuristics were considered:
 \begin{enumerate}
 	\singlespacing
 	\item The current score of the board
@@ -320,7 +320,7 @@ With these boards, three primary tests were conducted --- one using method 1, on
     \texttt{long-range.txt} & 29530 & 530/2000 & 31.60 \\
     \texttt{longboard-1.txt} & 259164 & 2100/20000 & 117.91 \\
     \texttt{longboard-2.txt} & 593529 & 4000/4000 & 1127.62 \\
-    \texttt{longboard-3.txt} & 6642924 & 14952/20000 & 362.51 \\
+    \texttt{longboard-3.txt} & 642924 & 14952/20000 & 362.51 \\
     \hline
     \end{tabular}%
   \label{tab:results-method2-modded}%
@@ -419,7 +419,7 @@ The output moves file is always written to \texttt{stdout}. All other messages s
     \texttt{-a <n>} & Controls the lookahead depth. The default value is 8, which produces the best results overall in a reasonable time. Lesser depths (e.g. n=4) increases the speed by an order magnitude and the results generally remain good too.  \\
     \texttt{-u <n>} & Controls the main priority queue size. The default is 200, and should be increased (to about 300) for depths less than 8. Increasing this too much may cause it to get stuck examining lower valued boards instead of continuing. \\
     \texttt{-i <n>} & Controls the nominal size of individual priority queues. In essence, it controls how many nodes are added to the main queue after each iteration of lookahead/evaluation. The default value is 2, and in general does not need to be changed. This value is nominal, as when the main queue is nearly empty, the size is automatically increased to populate the main queue quickly. \\
-    \texttt{-q <n>} & Controls the 'quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibilities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
+    \texttt{-q <n>} & Controls the `quiescence' limit. This number represents how many iterations the best result has remained the same for (i.e. are we stalled?). The default value is 5000. For depths less than 8, it is recommended to increase this to about 20,000 or more. Increasing this value too much will cause it to run slower as it tries more possibilities when stalled, but the speed should not fall below 5 moves/second. Too low however, and the agent may prematurely end without considering a path to get past the stall.\\
     \texttt{-o <output\_file>} & In addition to writing the output to \texttt{stdout}, the output will also be written to the specified output file. \\
     \texttt{-m <moves\_file>} & Reads in the moves file and plays that board repeatedly. For benchmarking purposes only. \\
     \hline
