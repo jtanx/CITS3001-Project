@@ -16,3 +16,5 @@ by:
 The output moves file is always written to `stdout`. All other messages
 should be written to `stderr`.
 
+### Download
+See [Releases](https://github.com/jtanx/CITS3001-Project/releases) for a copy.
