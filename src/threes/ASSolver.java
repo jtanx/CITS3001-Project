@@ -20,6 +20,11 @@ public class ASSolver implements Solver{
     Board.Direction.LEFT, Board.Direction.UP, Board.Direction.RIGHT, Board.Direction.DOWN
   };
   
+  /**
+   * Limits the thread to between 1 and 4. The reason it's capped
+   * at 4 is that the multi-threading implementation only explores
+   * at most 4 subtrees.
+   */
   private static final int THREAD_COUNT;
   static {
     int nt = Runtime.getRuntime().availableProcessors();
@@ -168,7 +173,10 @@ public class ASSolver implements Solver{
     pq.add(b);
     while (!pq.isEmpty()) {
       long runtime = System.nanoTime() - start;
+      
+      //If we have a potential solution
       if (fbest != null) {
+        //If we've searched enough - e.g < 5 m/s or tile sequence exhausted
         if (((runtime > maxTime) && nFBestSame >= 5) || 
             (fbest.nMoves() == tileSequence.length && nFBestSame >= (qui_size / 40)) ||
             nFBestSame >= qui_size) {
@@ -178,6 +186,7 @@ public class ASSolver implements Solver{
           return fbest;
         }
         
+        //Check: Are we stalled?
         if (fbest != prevFBest) {
           prevFBest = fbest;
           nFBestSame = 0;
@@ -231,12 +240,16 @@ public class ASSolver implements Solver{
       super(comparator);
       this.sizeLimit = sizeLimit;
     }
+    
+    private boolean addUnchecked(T t) {
+      return super.add(t);
+    }
 
     public LimitedQueue<T> dropHalf() {
       LimitedQueue<T> ret = new LimitedQueue<>(comparator(), sizeLimit);
       Iterator<T> it = iterator();
       for (int i = 0; i < size() / 2 && it.hasNext(); i++) {
-        ret.add(it.next());
+        ret.addUnchecked(it.next());
       }
       return ret;
     }
@@ -277,6 +290,15 @@ public class ASSolver implements Solver{
              factors[3] * b.nCombinable();
     }
 
+    /**
+     * Cost + heuristic evaluation.
+     * A scaling factor of 6 for the cost seems to work okay.
+     * Setting it too low (e.g &le; 4) causes it to evaluate nodes
+     * at the same depth instead of continuing further.
+     * @param o1 Board 1
+     * @param o2 Board 2
+     * @return Whatever the comparator spec says - I forget the order
+     */
     @Override
     public int compare(Board o1, Board o2) {
       int f1 = o1.nMoves() * 6 + evaluate(o1);

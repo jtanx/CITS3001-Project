@@ -85,6 +85,12 @@ public class Board {
     this.path = o.path;
   }
   
+  /**
+   * Can we perform a shift from one tile to another?
+   * @param from The tile to be shifted from
+   * @param to The tile to be shifted to
+   * @return If we can perform a shift
+   */
   private static boolean shift_valid(int from, int to) {
     return (from != 0 && to == 0) || (from == 1 && to == 2)
             || (from == 2 && to == 1) || (from > 2 && from == to);
@@ -131,6 +137,11 @@ public class Board {
     return c_sequence;
   }
   
+  /**
+   * The moves made to get to this board
+   * @return A string, with characters in the set {L,U,R,D} describing 
+   *         the moves made
+   */
   public String moves() {
     return path == null ? "" : path.toString();
   }
@@ -219,6 +230,13 @@ public class Board {
     return ret;
   }
   
+  /**
+   * Score: 
+   * 1's and 2's have a score of 1
+   * For v &ge; 3: 3^(log2(v)+1)
+   * @param t
+   * @return 
+   */
   public int tile_score(int t) {
     if (t == 1 || t == 2) {
       return 1;

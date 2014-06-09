@@ -7,6 +7,7 @@ import static threes.Threes.log_info;
 
 /**
  * 'Solves' the game using a depth-limited depth first search.
+ * Should not be used - use ASSolver instead.
  * @author Jeremy Tan, 20933708
  */
 public class DLDFSolver implements Solver {
