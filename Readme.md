@@ -4,8 +4,6 @@ This does not play the actual version of *Threes!*, but a modified version
 that is completely deterministic.
 
 ## Usage
-Stolen from the report~ (converted with (pandoc)[http://johnmacfarlane.net/pandoc/try/])
-
 On most platforms, the usual way to call the program is with:
 
 	java -jar threes.jar [options] input_file.txt
