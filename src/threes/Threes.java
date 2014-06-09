@@ -213,7 +213,7 @@ public class Threes {
   }
   
   public static void usage() {
-    System.out.println("CITS3001 Threes solver - 2014 r1");
+    System.out.println("CITS3001 Threes solver - 2014 r2");
     System.out.println("Usage: threes [-vsnd -l <i,j,k,l> -a <lookahead> -u <pq_sz> -i <ipq_sz>");
     System.out.println("              -q <qui_sz> -o <output_file> -m <moves_file>] input_file");
     System.out.println("Options:");
