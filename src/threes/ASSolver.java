@@ -174,7 +174,7 @@ public class ASSolver implements Solver{
     while (!pq.isEmpty()) {
       //If we have a potential solution
       if (fbest != null) {
-        long runtime = (System.nanoTime() - start) / 1000000000L;
+        long runtime = ((System.nanoTime() - start) / 1000000000L)+1;
         long mps = fbest.nMoves() / runtime;
         //If we've searched enough - e.g < 5 m/s or tile sequence exhausted
         //Stabilise the mps - discount if time < 20s
